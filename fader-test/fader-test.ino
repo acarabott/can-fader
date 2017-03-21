@@ -1,3 +1,8 @@
+#include <PID_v1.h>
+
+// TODO
+// include library in repo
+
 #define PRINT_LABEL(LABEL, VALUE) Serial.print(LABEL); Serial.println(VALUE)
 #define ANALOG_IN_MAX 1023
 #define ANALOG_OUT_MAX 255
