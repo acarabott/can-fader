@@ -33,7 +33,7 @@ void setup() {
 
   // moveToOtherEnd();
 
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 void setMotorPwm(uint8_t value) {
@@ -58,20 +58,10 @@ void loop() {
 
   if (Serial.available() > 0) {
     const auto read_value = Serial.parseInt();
-    const auto constrained = constrain(read_value, -255, 255);
-    analogWrite(g_motor_pwm_pin, constrained);
 
-    // if (read_value >= 0) {
-    //   const auto constrained = CONSTRAIN_ANALOG(read_value);
-    //   const auto output_value = constrained;
-    //   // const auto output_value = MAP_ANALOG_IN_TO_ANALOG_OUT(constrained);
-    //   analogWrite(g_motor_pwm_pin, output_value);
-
-    //   PRINT_LABEL("outputting: ", output_value);
-    // }
-    // else if (read_value == -1) {
-    //   moveToOtherEnd();
-    //   PRINT_LABEL("direction: ", g_direction);
-    // }
+    if (read_value == -1) {
+      moveToOtherEnd();
+      PRINT_LABEL("direction: ", g_direction);
+    }
   }
 }
