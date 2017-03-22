@@ -1,4 +1,4 @@
-// #include <PID_v1.h>
+#include <PID_v1.h>
 
 // TODO
 
@@ -30,11 +30,25 @@ auto g_interval = 500;
 
 auto g_errorThresh = 1;
 
+double Setpoint, Input, Output;
+
+//Specify the links and initial tuning parameters
+double Kp=1, Ki=1, Kd=2;
+PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+
+
 void setup() {
   pinMode(g_motor_direction_pin, OUTPUT);
   pinMode(g_motor_pwm_pin, OUTPUT);
 
+  setTarget(512);
+
   Serial.begin(115200);
+
+  myPID.SetOutputLimits(-255, 255);
+  myPID.SetMode(AUTOMATIC);
+  myPID.SetSampleTime(1);
+
 }
 
 void setDirection(decltype(HIGH) direction) {
@@ -60,6 +74,7 @@ void moveToOtherEnd() {
 
 void setTarget(uint16_t value) {
   g_target = constrain(value, 0, LINE_MAX);
+  Setpoint = g_target;
 }
 
 void loop() {
@@ -67,15 +82,22 @@ void loop() {
   const auto touchValue = analogRead(g_touch_pin);
   const auto lineValue = analogRead(g_line_pin);
 
+  Input = lineValue;
+  myPID.Compute();
+
   const auto error = g_target - lineValue;
 
-  P_LBL("g_target: ", g_target);
-  P_LBL("lineValue: ", lineValue);
-  P_LBL("servoValue: ", servoValue);
+  // P_LBL("g_target: ", g_target);
+  // P_LBL("lineValue: ", lineValue);
+  // P_LBL("servoValue: ", servoValue);
   P_LBL("error: ", error);
+  P_LBL("PID: ", Output);
+
   if (abs(error) > g_errorThresh) {
     auto direction = error > 0 ? LOW : HIGH;
-    auto pwm = abs(error) > 15 ? 255 : 127;
+    auto pwm = abs(error) > 15 ? 255 : 200;
+    // auto direction = Output > 0 ? LOW : HIGH;
+    // auto pwm = abs(Output);
     setDirection(direction);
     setMotorPwm(pwm);
     delay(7);
