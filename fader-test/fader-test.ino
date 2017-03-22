@@ -1,53 +1,95 @@
-// #include <PID_v1.h>
+#include <PID_v1.h>
 
 // TODO
-// include library in repo
-#define PL(VALUE) Serial.println(VALUE)
-#define PRINT_LABEL(LABEL, VALUE) Serial.print(LABEL); Serial.println(VALUE)
+/*
+- get PID to work
+- include library in repo
+- Wrap touch states (off/on/max)
+- Wrap whole slider as class
+*/
+#define P(VALUE) Serial.print((VALUE))
+#define PL(VALUE) Serial.println((VALUE))
+#define P_LBL(LABEL, VALUE) Serial.print((LABEL)); Serial.println((VALUE))
 #define ANALOG_IN_MAX 1023
 #define ANALOG_OUT_MAX 255
-#define CONSTRAIN_ANALOG(VALUE) constrain((VALUE), 0, ANALOG_IN_MAX)
-#define MAP_ANALOG_IN_TO_ANALOG_OUT(VALUE) map((VALUE), 0, ANALOG_IN_MAX, 0, ANALOG_OUT_MAX)
+#define CONSTRAIN_AIN(VALUE) constrain((VALUE), 0, ANALOG_IN_MAX)
+#define CONSTRAIN_AOUT(VALUE) constrain((VALUE), 0, ANALOG_OUT_MAX)
+#define MAP_AIN_TO_AOUT(VALUE) map((VALUE), 0, ANALOG_IN_MAX, 0, ANALOG_OUT_MAX)
 
-const uint8_t servo_pin = A0;
-const uint8_t touch_pin = A2;
-const uint8_t line_pin = A4;
+const uint8_t g_servo_pin = A0;
+const uint8_t g_touch_pin = A2;
+const uint8_t g_line_pin = A4;
 
-// double faderIn, faderOut, faderSet;
-// PID pid(&faderIn, &faderOut, &faderSet, 2, 5, 1, DIRECT);
+const uint8_t g_motor_direction_pin = 12;
+const uint8_t g_motor_pwm_pin = 3;
+
+double g_faderIn, g_faderOut, g_faderSet;
+const double g_kp = 2;
+const double g_ki = 5;
+const double g_kd = 1;
+
+PID pid(&g_faderIn, &g_faderOut, &g_faderSet, g_kp, g_ki, g_kd, DIRECT);
+
+auto g_prevTime = millis();
+auto g_interval = 500;
+
+void setFaderPoint(uint16_t point) {
+  // make sure this matches the input range
+  g_faderSet = constrain(point, 0, ANALOG_IN_MAX);
+  return g_faderSet;
+}
 
 void setup() {
-  pinMode(touch_pin, INPUT);
-  pinMode(line_pin, INPUT);
-  pinMode(servo_pin, INPUT);
+  pinMode(g_touch_pin, INPUT);
+  pinMode(g_line_pin, INPUT);
+  pinMode(g_servo_pin, INPUT);
 
-  // pid.SetMode(AUTOMATIC);
+  // read current position for PID
+  g_faderIn = analogRead(g_servo_pin);
+  setFaderPoint(512);
+
+  // we will use the abs value for the motor and the sign to determine direction
+  pid.SetOutputLimits(-255, 255);
+  // initialize PID
+  pid.SetMode(AUTOMATIC);
 
   Serial.begin(115200);
 }
 
 void loop() {
-  const auto touch_value = analogRead(touch_pin);
-  const auto line_value = analogRead(line_pin);
-  const auto servo_value = analogRead(servo_pin);
+  const auto touch_value = analogRead(g_touch_pin);
+  const auto line_value = analogRead(g_line_pin);
+  const auto servo_value = analogRead(g_servo_pin);
 
-  // String withScale = "900 ";
-  // withScale += touch_value;
-  // withScale += " 1023";
-  // PL(withScale);
-  // PRINT_LABEL("touch: ", touch_value);
-  // PRINT_LABEL("line: ", line_value);
-  // PRINT_LABEL("servo: ", servo_value);
-  // PL("");
+  // P_LBL("line_value: ", line_value);
+  // PL(analogRead(g_line_pin));
+
+  // calculate servo output and direction using PID
+  g_faderIn = line_value;
+  pid.Compute(); // this reads from g_faderIn and writes to g_faderOut
+
+  const auto direction = g_faderOut >= 0 ? HIGH : LOW;
+  const auto motor_value = constrain(abs(g_faderOut), 0, ANALOG_OUT_MAX);
+  digitalWrite(g_motor_direction_pin, direction);
+  analogWrite(g_motor_pwm_pin, motor_value);
+
+  const auto curTime = millis();
+  if (curTime - g_prevTime > g_interval) {
+    P_LBL("set: ", g_faderSet);
+    P_LBL("in: ", g_faderIn);
+    P_LBL("out: ", g_faderOut);
+    P_LBL("direction: ", direction);
+    P_LBL("motor_value: ", motor_value);
+    PL("");
+    g_prevTime = curTime;
+  }
 
   if (Serial.available() > 0) {
     const auto read_value = Serial.parseInt();
-    const auto constrained = CONSTRAIN_ANALOG(read_value);
-    const auto output_value = MAP_ANALOG_IN_TO_ANALOG_OUT(constrained);
-    // PRINT_LABEL("outputting: ", output_value);
-    // analogWrite(servo_pin, output_value);
+    setFaderPoint(read_value);
+    P_LBL("set point: ", g_faderSet);
   }
 
-  // faderIn = analogRead(line_pin);
+  // g_faderIn = analogRead(g_line_pin);
 
 }
