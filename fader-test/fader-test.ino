@@ -1,9 +1,5 @@
-// #include <PID_v1.h>
-
 // TODO
 
-// - get PID to work
-// - include library in repo
 // - Wrap touch states (off/on/max)
 // - Wrap whole slider as class
 
