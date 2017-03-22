@@ -6,9 +6,9 @@
 #define MAP_ANALOG_IN_TO_ANALOG_OUT(VALUE) map((VALUE), 0, ANALOG_IN_MAX, 0, ANALOG_OUT_MAX)
 
 const uint8_t g_motor_direction_pin = 12;
-const uint8_t g_motor_pwm = 3;
-const uint8_t g_motor_brake = 9;
-const uint8_t g_motor_sensing = 0;
+const uint8_t g_motor_pwm_pin = 3;
+const uint8_t g_motor_brake_pin = 9;
+const uint8_t g_motor_sensing_pin = 0;
 
 auto g_direction = HIGH;
 
@@ -27,17 +27,30 @@ void toggleDirection() {
 
 void setup() {
   pinMode(g_motor_direction_pin, OUTPUT);
-  pinMode(g_motor_pwm, OUTPUT);
-  pinMode(g_motor_brake, OUTPUT);
-  pinMode(g_motor_sensing, INPUT);
+  pinMode(g_motor_pwm_pin, OUTPUT);
+  pinMode(g_motor_brake_pin, OUTPUT);
+  pinMode(g_motor_sensing_pin, INPUT);
+
+  moveToOtherEnd();
 
   Serial.begin(9600);
+}
+
+void setMotorPwm(uint8_t value) {
+  analogWrite(g_motor_pwm_pin, constrain(value, 0, ANALOG_OUT_MAX));
+}
+
+void moveToOtherEnd() {
+  toggleDirection();
+  setMotorPwm(255);
+  delay(200);
+  setMotorPwm(0);
 }
 
 void loop() {
   auto curTime = millis();
   if (curTime - prevTime > timeInterval) {
-    const auto sensorValue = analogRead(INPUT);
+    const auto sensorValue = analogRead(g_motor_sensing_pin);
     prevTime = curTime;
 
     PRINT_LABEL("sensing: ", sensorValue);
@@ -47,14 +60,14 @@ void loop() {
     const auto read_value = Serial.parseInt();
     if (read_value >= 0) {
       const auto constrained = CONSTRAIN_ANALOG(read_value);
-      const auto output_value = MAP_ANALOG_IN_TO_ANALOG_OUT(constrained);
-      analogWrite(g_motor_pwm, output_value);
+      const auto output_value = constrained;
+      // const auto output_value = MAP_ANALOG_IN_TO_ANALOG_OUT(constrained);
+      analogWrite(g_motor_pwm_pin, output_value);
 
       PRINT_LABEL("outputting: ", output_value);
     }
     else if (read_value == -1) {
-      toggleDirection();
-
+      moveToOtherEnd();
       PRINT_LABEL("direction: ", g_direction);
     }
   }
