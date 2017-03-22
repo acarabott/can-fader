@@ -26,6 +26,8 @@ auto g_interval = 500;
 
 auto g_errorThresh = 5;
 
+auto g_moving = false;
+
 void setup() {
   pinMode(g_motor_direction_pin, OUTPUT);
   pinMode(g_motor_pwm_pin, OUTPUT);
@@ -55,6 +57,7 @@ void moveToOtherEnd() {
 }
 
 void setTarget(uint16_t value) {
+  g_moving = true;
   g_target = constrain(value, 0, LINE_MAX);
 }
 
@@ -65,7 +68,7 @@ void loop() {
 
   const auto error = g_target - lineValue;
 
-  if (abs(error) > g_errorThresh) {
+  if (g_moving && abs(error) > g_errorThresh) {
     auto direction = error > 0 ? LOW : HIGH;
     auto pwm = abs(error) > 30 ? 255 : map(abs(error), 1, 30, 150, 255);
     setDirection(direction);
@@ -74,7 +77,26 @@ void loop() {
     setMotorPwm(0);
   } else {
     setMotorPwm(0);
+    g_moving = false;
   }
+
+  if (lineValue % 300 == 0)
+  {
+    setMotorPwm(255);
+    delay(2);
+    setMotorPwm(0);
+    toggleDirection();
+    setMotorPwm(255);
+    delay(2);
+    setMotorPwm(0);
+  }
+  else if (lineValue % 100 == 0)
+  {
+    setMotorPwm(150);
+    delay(5);
+    setMotorPwm(0);
+  }
+
 
   if (Serial.available() > 0) {
     const auto read_value = Serial.parseInt();
