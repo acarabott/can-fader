@@ -13,6 +13,8 @@
 #define ANALOG_IN_MAX 1023
 #define ANALOG_OUT_MAX 255
 
+#define LINE_MAX 1019
+
 const uint8_t g_servo_pin = A0;
 const uint8_t g_touch_pin = A2;
 const uint8_t g_line_pin = A4;
@@ -21,12 +23,12 @@ const uint8_t g_motor_direction_pin = 12;
 const uint8_t g_motor_pwm_pin = 3;
 
 auto g_direction = HIGH;
-int16_t target = 512;
+int16_t g_target = 512;
 
 auto g_prevTime = millis();
 auto g_interval = 500;
 
-
+auto g_errorThresh = 1;
 
 void setup() {
   pinMode(g_motor_direction_pin, OUTPUT);
@@ -56,31 +58,43 @@ void moveToOtherEnd() {
   setMotorPwm(0);
 }
 
+void setTarget(uint16_t value) {
+  g_target = constrain(value, 0, LINE_MAX);
+}
+
 void loop() {
   const auto servoValue = analogRead(g_servo_pin);
   const auto touchValue = analogRead(g_touch_pin);
   const auto lineValue = analogRead(g_line_pin);
 
-  const auto error = target - lineValue;
+  const auto error = g_target - lineValue;
 
-  P_LBL("target: ", target);
+  P_LBL("g_target: ", g_target);
   P_LBL("lineValue: ", lineValue);
+  P_LBL("servoValue: ", servoValue);
   P_LBL("error: ", error);
-  if (abs(error) > 100) {
+  if (abs(error) > g_errorThresh) {
     auto direction = error > 0 ? LOW : HIGH;
+    auto pwm = abs(error) > 15 ? 255 : 127;
     setDirection(direction);
-    setMotorPwm(255);
-    // moveToOtherEnd();
-    // delay(1000);
+    setMotorPwm(pwm);
+    delay(7);
+    setMotorPwm(0);
   } else {
     setMotorPwm(0);
   }
 
   if (Serial.available() > 0) {
     const auto read_value = Serial.parseInt();
-    if (read_value == 1) {
-      moveToOtherEnd();
-      PL(g_direction == HIGH ? "HIGH" : "LOW");
+    if (read_value >= 0) {
+      g_errorThresh = constrain(read_value, 0, 100);
     }
+    else {
+      setTarget(abs(read_value));
+    }
+    // if (read_value == 1) {
+    //   moveToOtherEnd();
+    //   PL(g_direction == HIGH ? "HIGH" : "LOW");
+    // }
   }
 }
