@@ -28,7 +28,7 @@ int16_t g_target = 512;
 auto g_prevTime = millis();
 auto g_interval = 500;
 
-auto g_errorThresh = 1;
+auto g_errorThresh = 5;
 
 void setup() {
   pinMode(g_motor_direction_pin, OUTPUT);
@@ -69,16 +69,12 @@ void loop() {
 
   const auto error = g_target - lineValue;
 
-  P_LBL("g_target: ", g_target);
-  P_LBL("lineValue: ", lineValue);
-  P_LBL("servoValue: ", servoValue);
-  P_LBL("error: ", error);
   if (abs(error) > g_errorThresh) {
     auto direction = error > 0 ? LOW : HIGH;
-    auto pwm = abs(error) > 15 ? 255 : 127;
+    auto pwm = abs(error) > 30 ? 255 : map(abs(error), 1, 30, 150, 255);
     setDirection(direction);
     setMotorPwm(pwm);
-    delay(7);
+    delay(5);
     setMotorPwm(0);
   } else {
     setMotorPwm(0);
@@ -92,9 +88,5 @@ void loop() {
     else {
       setTarget(abs(read_value));
     }
-    // if (read_value == 1) {
-    //   moveToOtherEnd();
-    //   PL(g_direction == HIGH ? "HIGH" : "LOW");
-    // }
   }
 }
