@@ -29,10 +29,58 @@ auto g_errorThresh = 5;
 auto g_moving = false;
 uint16_t g_prevLineValue = 0;
 
+const size_t g_num_presets = 25;
+#define EMPTY_PRESET -1
+int16_t g_presets[g_num_presets];
+uint8_t g_preset_index = 0;
+const uint16_t g_preset_error_thresh = 5;
+
+void clearPresets() {
+  for (size_t i = 0; i < g_num_presets; ++i) {
+    g_presets[i] = EMPTY_PRESET;
+  }
+}
+
+void addPreset(int16_t value) {
+  g_presets[g_preset_index] = value;
+
+  g_preset_index++;
+  g_preset_index %= g_num_presets;
+}
+
+bool inRange(int64_t value, int64_t min, int64_t max) {
+  return value >= min && value <= max;
+}
+
+bool isNear(int64_t value, int64_t target, int64_t error) {
+  return inRange(value, target - error, target + error);
+}
+
+
+void deletePreset(int16_t value) {
+  for (size_t i = 0; i < g_num_presets; ++i) {
+    if (isNear(value, g_presets[i], g_preset_error_thresh)) {
+      g_presets[i] = EMPTY_PRESET;
+    }
+  }
+}
+
+bool isPreset(int16_t value) {
+  for (size_t i = 0; i < g_num_presets; ++i) {
+    const auto& preset = g_presets[i];
+    if (preset != EMPTY_PRESET &&
+        isNear(value, preset, g_preset_error_thresh)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void setup() {
   pinMode(g_motor_direction_pin, OUTPUT);
   pinMode(g_motor_pwm_pin, OUTPUT);
 
+  clearPresets();
   Serial.begin(115200);
 }
 
@@ -82,7 +130,7 @@ void loop() {
 
   const auto error = g_target - lineValue;
 
-  P_LBL("line: ", lineValue);
+  // P_LBL("line: ", lineValue);
   if (g_moving) {
     if (abs(error) > g_errorThresh) {
       auto direction = error > 0 ? LOW : HIGH;
@@ -97,22 +145,32 @@ void loop() {
     }
   }
 
-  if (lineValue != g_prevLineValue) {
-    if (lineValue % 300 == 0)
-    {
-      tick(1.0);
-    }
-    else if (lineValue % 100 == 0)
-    {
-      tick(0.5);
-    }
+  // Presets
+  if (isPreset(lineValue) && lineValue != g_prevLineValue) {
+    tick(0.8);
   }
+
+  // regular ticks
+  // if (lineValue != g_prevLineValue) {
+  //   if (lineValue % 300 == 0)
+  //   {
+  //     tick(1.0);
+  //   }
+  //   else if (lineValue % 100 == 0)
+  //   {
+  //     tick(0.5);
+  //   }
+  // }
+
 
 
   if (Serial.available() > 0) {
     const auto read_value = Serial.parseInt();
     if (read_value >= 0) {
       g_errorThresh = constrain(read_value, 0, 100);
+    }
+    else if (read_value == -6666) {
+      addPreset(lineValue);
     }
     else {
       setTarget(abs(read_value));
