@@ -82,6 +82,7 @@ void loop() {
 
   const auto error = g_target - lineValue;
 
+  P_LBL("line: ", lineValue);
   if (g_moving) {
     if (abs(error) > g_errorThresh) {
       auto direction = error > 0 ? LOW : HIGH;
