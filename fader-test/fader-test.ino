@@ -68,16 +68,18 @@ void loop() {
 
   const auto error = g_target - lineValue;
 
-  if (g_moving && abs(error) > g_errorThresh) {
-    auto direction = error > 0 ? LOW : HIGH;
-    auto pwm = abs(error) > 30 ? 255 : map(abs(error), 1, 30, 150, 255);
-    setDirection(direction);
-    setMotorPwm(pwm);
-    delay(5);
-    setMotorPwm(0);
-  } else {
-    setMotorPwm(0);
-    g_moving = false;
+  if (g_moving) {
+    if (abs(error) > g_errorThresh) {
+      auto direction = error > 0 ? LOW : HIGH;
+      auto pwm = abs(error) > 30 ? 255 : map(abs(error), 1, 30, 150, 255);
+      setDirection(direction);
+      setMotorPwm(pwm);
+      delay(5);
+      setMotorPwm(0);
+    } else {
+      setMotorPwm(0);
+      g_moving = false;
+    }
   }
 
   if (lineValue % 300 == 0)
