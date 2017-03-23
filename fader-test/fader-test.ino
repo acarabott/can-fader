@@ -22,7 +22,7 @@ auto g_direction = HIGH;
 int16_t g_target = 512;
 
 auto g_prevTime = millis();
-auto g_interval = 500;
+auto g_interval = 20; // 50Hz AC
 
 auto g_errorThresh = 5;
 
@@ -35,8 +35,70 @@ int16_t g_presets[g_num_presets];
 uint8_t g_preset_index = 0;
 const uint16_t g_preset_error_thresh = 5;
 
+const size_t g_touch_history_size = 50;
+typedef decltype(analogRead(g_touch_pin)) analogIn_t;
+analogIn_t g_touch_history[g_touch_history_size] = { 0 };
+size_t g_touch_history_idx = 0;
+double g_touch_min = ANALOG_IN_MAX;
+double g_touch_error = 40;
+
+void updateTouchCalibration(auto value) {
+  // update avg
+  g_touch_history[g_touch_history_idx % g_touch_history_size] = value;
+  g_touch_history_idx++;
+
+  const auto avg = getTouchAverage();
+  // update error, only once we have had a full averaging window
+  const auto completedWindow = g_touch_history_idx >= g_touch_history_size;
+  if (completedWindow) {
+    g_touch_error = max(abs(value - avg), g_touch_error) - 0.01;
+  }
+
+  // update min
+  const auto minVal = completedWindow ? avg : value;
+  g_touch_min = min(g_touch_min, minVal) + 0.001; // increase to auto calibrate
+
+
+
+}
+
+
+double getTouchAverage() {
+  double sum = 0.0;
+  for (auto i = 0; i < g_touch_history_size; i++) {
+    sum += g_touch_history[i];
+  }
+  return sum / double(g_touch_history_size);
+}
+
+bool getTouchState() {
+  const uint16_t avg = floor(getTouchAverage()); // converting
+
+  String p = "900 ";
+  p += g_touch_min;
+  p += " ";
+  p += avg;
+  p += " 1023";
+  PL(p);
+
+  if (avg == ANALOG_IN_MAX) {
+    return false;
+  }
+
+  if (isNear(avg, ))
+
+
+  // P_LBL("avg: ", avg);
+  // P_LBL("min: ", g_touch_min);
+  // P_LBL("err: ", g_touch_error);
+  if (avg > g_touch_min + 20) {
+    return false;
+  }
+  return true;
+}
+
 void clearPresets() {
-  for (size_t i = 0; i < g_num_presets; ++i) {
+  for (auto i = 0; i < g_num_presets; ++i) {
     g_presets[i] = EMPTY_PRESET;
   }
 }
@@ -58,7 +120,7 @@ bool isNear(int64_t value, int64_t target, int64_t error) {
 
 
 void deletePreset(int16_t value) {
-  for (size_t i = 0; i < g_num_presets; ++i) {
+  for (auto i = 0; i < g_num_presets; ++i) {
     if (isNear(value, g_presets[i], g_preset_error_thresh)) {
       g_presets[i] = EMPTY_PRESET;
     }
@@ -66,7 +128,7 @@ void deletePreset(int16_t value) {
 }
 
 bool isPreset(int16_t value) {
-  for (size_t i = 0; i < g_num_presets; ++i) {
+  for (auto i = 0; i < g_num_presets; ++i) {
     const auto& preset = g_presets[i];
     if (preset != EMPTY_PRESET &&
         isNear(value, preset, g_preset_error_thresh)) {
@@ -130,7 +192,19 @@ void loop() {
 
   const auto error = g_target - lineValue;
 
-  // P_LBL("line: ", lineValue);
+  updateTouchCalibration(touchValue);
+  const uint16_t touch_average = getTouchAverage();
+
+  const auto touching = getTouchState();
+  if (touching)
+  {
+    // PL("touching");
+  }
+  else {
+    // PL("not touching");
+  }
+
+
   if (g_moving) {
     if (abs(error) > g_errorThresh) {
       auto direction = error > 0 ? LOW : HIGH;
