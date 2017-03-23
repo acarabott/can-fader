@@ -27,6 +27,7 @@ auto g_interval = 500;
 auto g_errorThresh = 5;
 
 auto g_moving = false;
+uint16_t g_prevLineValue = 0;
 
 void setup() {
   pinMode(g_motor_direction_pin, OUTPUT);
@@ -61,6 +62,19 @@ void setTarget(uint16_t value) {
   g_target = constrain(value, 0, LINE_MAX);
 }
 
+void tick(float intensity) {
+  const auto c_intensity = constrain(intensity, 0.0, 1.0);
+  uint8_t dur = map(c_intensity, 0.0, 1.0, 1, 5);
+
+  setMotorPwm(255);
+  delay(dur);
+  setMotorPwm(0);
+  toggleDirection();
+  setMotorPwm(255);
+  delay(dur);
+  setMotorPwm(0);
+}
+
 void loop() {
   const auto servoValue = analogRead(g_servo_pin);
   const auto touchValue = analogRead(g_touch_pin);
@@ -82,21 +96,15 @@ void loop() {
     }
   }
 
-  if (lineValue % 300 == 0)
-  {
-    setMotorPwm(255);
-    delay(2);
-    setMotorPwm(0);
-    toggleDirection();
-    setMotorPwm(255);
-    delay(2);
-    setMotorPwm(0);
-  }
-  else if (lineValue % 100 == 0)
-  {
-    setMotorPwm(150);
-    delay(5);
-    setMotorPwm(0);
+  if (lineValue != g_prevLineValue) {
+    if (lineValue % 300 == 0)
+    {
+      tick(1.0);
+    }
+    else if (lineValue % 100 == 0)
+    {
+      tick(0.5);
+    }
   }
 
 
