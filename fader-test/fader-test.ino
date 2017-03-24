@@ -36,19 +36,15 @@ int16_t g_presets[g_num_presets];
 uint8_t g_preset_index = 0;
 const uint16_t g_preset_error_thresh = 5;
 
-size_t g_touch_history_size = 100;
-int16_t g_touch_history[100] = { 0 };
-// const size_t g_touch_history_size = 100;
-// int16_t g_touch_history[g_touch_history_size] = { 0 };
+const size_t g_touch_history_size = 30;
+int16_t g_touch_history[g_touch_history_size] = { 0 };
 int16_t g_touch_value = 0;
-int16_t g_prev_touch_value = 0;
 size_t g_touch_history_idx = 0;
-uint16_t g_touch_thresh = 980;
+const uint16_t g_touch_thresh = 980;
 const uint16_t g_touch_range_thresh = 3;
 
 void updateTouchCalibration(auto value) {
   // update avg
-  g_prev_touch_value = g_touch_value;
   g_touch_value = value;
   g_touch_history[g_touch_history_idx % g_touch_history_size] = value;
   g_touch_history_idx++;
