@@ -53,7 +53,7 @@ void updateTouchCalibration(auto value) {
 
 bool getTouchState() {
   // if we have no history to work with just use naive version
-  if (g_touch_history_idx < g_touch_history_idx) {
+  if (g_touch_history_idx < g_touch_history_size) {
     return g_touch_value > g_touch_thresh;
   }
 
