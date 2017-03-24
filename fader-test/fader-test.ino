@@ -62,7 +62,7 @@ bool getTouchState() {
   // We can tell if touching based on the amount of fluctuation however
   // When not touched, there will be very little fluctuation
 
-  double sum = 0.0;
+  float sum = 0.0;
   int16_t minVal = 1023;
   int16_t maxVal = 0;
 
@@ -73,7 +73,7 @@ bool getTouchState() {
     maxVal = max(maxVal, val);
   }
 
-  const double avg = sum / double(g_touch_history_size);
+  const float avg = sum / float(g_touch_history_size);
 
   // fader position gives reasonable touch values
   if (g_lineValue < LINE_MAX) {
@@ -236,8 +236,8 @@ void loop() {
       addPreset(g_lineValue);
     }
     else {
-      g_touch_history_size = constrain(abs(read_value), 0, 100);
-      P_LBL("touch hist size: ", g_touch_history_size);
+      // g_touch_history_size = constrain(abs(read_value), 0, 100);
+      // P_LBL("touch hist size: ", g_touch_history_size);
       // g_touch_thresh = constrain(abs(read_value), 0, ANALOG_IN_MAX);
       // P_LBL("touch thresh: ", g_touch_thresh);
       // setTarget(abs(read_value));
