@@ -56,7 +56,15 @@ void updateTouchCalibration(auto value) {
 
 
 bool getTouchState() {
-  if (g_touch_history_idx < g_touch_history_idx) { return false; }
+  // if we have no history to work with just use naive version
+  if (g_touch_history_idx < g_touch_history_idx) {
+    return g_touch_value > g_touch_thresh;
+  }
+
+  // If the fader is in the last 95% of the upper range, the touch sensor values
+  // jump really high (> 1000)
+  // We can tell if touching based on the amount of fluctuation however
+  // When not touched, there will be very little fluctuation
 
   double sum = 0.0;
   int16_t minVal = 1023;
@@ -70,33 +78,15 @@ bool getTouchState() {
   }
 
   const double avg = sum / double(g_touch_history_size);
-  const auto range = maxVal - minVal;
 
+  // fader position gives reasonable touch values
   if (g_lineValue < LINE_MAX) {
     return avg > g_touch_thresh;
   }
 
+  // fader position results in really high touch values;
+  const auto range = maxVal - minVal;
   return avg > g_touch_thresh && range > g_touch_range_thresh;
-
-  // String p = "900 ";
-
-  // p += g_touch_history[g_touch_history_idx % g_touch_history_size];
-  // p += " ";
-
-  // p += avg;
-  // p += " ";
-
-  // p += g_lineValue;
-  // p += " ";
-
-  // p += range;
-  // p += " ";
-
-  // p += touching ? 1100 : 1050;
-  // p += " 1023";
-  // PL(p);
-
-  // return touching;
 }
 
 void clearPresets() {
