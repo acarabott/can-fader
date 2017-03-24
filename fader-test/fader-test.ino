@@ -1,3 +1,4 @@
+#include "FaderTouchSensor.h"
 // TODO
 
 // - Wrap touch states (off/on/max)
@@ -30,60 +31,13 @@ auto g_moving = false;
 int16_t g_lineValue = 0;
 int16_t g_prevLineValue = 0;
 
+FaderTouchSensor touchSensor(g_touch_pin, g_line_pin);
+
 const size_t g_num_presets = 25;
 #define EMPTY_PRESET -1
 int16_t g_presets[g_num_presets];
 uint8_t g_preset_index = 0;
 const uint16_t g_preset_error_thresh = 5;
-
-const size_t g_touch_history_size = 30;
-int16_t g_touch_history[g_touch_history_size] = { 0 };
-int16_t g_touch_value = 0;
-size_t g_touch_history_idx = 0;
-const uint16_t g_touch_thresh = 980;
-const uint16_t g_touch_range_thresh = 3;
-
-void updateTouchCalibration(auto value) {
-  // update avg
-  g_touch_value = value;
-  g_touch_history[g_touch_history_idx % g_touch_history_size] = value;
-  g_touch_history_idx++;
-}
-
-
-bool getTouchState() {
-  // if we have no history to work with just use naive version
-  if (g_touch_history_idx < g_touch_history_size) {
-    return g_touch_value > g_touch_thresh;
-  }
-
-  // If the fader is in the last 95% of the upper range, the touch sensor values
-  // jump really high (> 1000)
-  // We can tell if touching based on the amount of fluctuation however
-  // When not touched, there will be very little fluctuation
-
-  float sum = 0.0;
-  int16_t minVal = 1023;
-  int16_t maxVal = 0;
-
-  for (auto i = 0; i < g_touch_history_size; i++) {
-    const auto& val = g_touch_history[i];
-    sum += val;
-    minVal = min(minVal, val);
-    maxVal = max(maxVal, val);
-  }
-
-  const float avg = sum / float(g_touch_history_size);
-
-  // fader position gives reasonable touch values
-  if (g_lineValue < LINE_MAX) {
-    return avg > g_touch_thresh;
-  }
-
-  // fader position results in really high touch values;
-  const auto range = maxVal - minVal;
-  return avg > g_touch_thresh && range > g_touch_range_thresh;
-}
 
 void clearPresets() {
   for (auto i = 0; i < g_num_presets; ++i) {
@@ -175,16 +129,16 @@ void tick(float intensity) {
 
 void loop() {
   const auto servoValue = analogRead(g_servo_pin);
-  const auto touchValue = analogRead(g_touch_pin);
 
   g_prevLineValue = g_lineValue;
   g_lineValue = analogRead(g_line_pin);
 
   const auto error = g_target - g_lineValue;
 
-  updateTouchCalibration(touchValue);
+  touchSensor.update();
 
-  const auto touching = getTouchState();
+  const auto touching = touchSensor.isTouching();
+
   if (touching)
   {
     PL("touching");
