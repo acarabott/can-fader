@@ -31,7 +31,7 @@ auto g_moving = false;
 int16_t g_lineValue = 0;
 int16_t g_prevLineValue = 0;
 
-FaderTouchSensor touchSensor(g_touch_pin, g_line_pin);
+FaderTouchSensor touchSensor;
 
 const size_t g_num_presets = 25;
 #define EMPTY_PRESET -1
@@ -129,13 +129,14 @@ void tick(float intensity) {
 
 void loop() {
   const auto servoValue = analogRead(g_servo_pin);
+  const auto touchValue = analogRead(g_touch_pin);
 
   g_prevLineValue = g_lineValue;
   g_lineValue = analogRead(g_line_pin);
 
   const auto error = g_target - g_lineValue;
 
-  touchSensor.update();
+  touchSensor.update(touchValue);
 
   const auto touching = touchSensor.isTouching();
 
