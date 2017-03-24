@@ -27,7 +27,8 @@ auto g_interval = 20; // 50Hz AC
 auto g_errorThresh = 5;
 
 auto g_moving = false;
-uint16_t g_prevLineValue = 0;
+int16_t g_lineValue = 0;
+int16_t g_prevLineValue = 0;
 
 const size_t g_num_presets = 25;
 #define EMPTY_PRESET -1
@@ -35,66 +36,58 @@ int16_t g_presets[g_num_presets];
 uint8_t g_preset_index = 0;
 const uint16_t g_preset_error_thresh = 5;
 
-const size_t g_touch_history_size = 50;
-typedef decltype(analogRead(g_touch_pin)) analogIn_t;
-analogIn_t g_touch_history[g_touch_history_size] = { 0 };
+const size_t g_touch_history_size = 100;
+int16_t g_touch_history[g_touch_history_size] = { 0 };
 size_t g_touch_history_idx = 0;
-double g_touch_min = ANALOG_IN_MAX;
-double g_touch_error = 40;
-uint16_t g_touch_thresh = 970;
+uint16_t g_touch_thresh = 980;
+const uint16_t g_touch_range_thresh = 3;
 
 void updateTouchCalibration(auto value) {
   // update avg
   g_touch_history[g_touch_history_idx % g_touch_history_size] = value;
   g_touch_history_idx++;
-
-  const auto avg = getTouchAverage();
-  // update error, only once we have had a full averaging window
-  const auto completedWindow = g_touch_history_idx >= g_touch_history_size;
-  if (completedWindow) {
-    g_touch_error = max(abs(value - avg), g_touch_error) - 0.01;
-  }
-
-  // update min
-  const auto minVal = completedWindow ? avg : value;
-  g_touch_min = min(g_touch_min, minVal) + 0.001; // increase to auto calibrate
-
-
-
 }
 
-
-double getTouchAverage() {
-  double sum = 0.0;
-  for (auto i = 0; i < g_touch_history_size; i++) {
-    sum += g_touch_history[i];
-  }
-  return sum / double(g_touch_history_size);
-}
 
 bool getTouchState() {
-  const double avg = floor(getTouchAverage()); // converting
 
-  const auto touching = avg < ANALOG_IN_MAX  && avg > g_touch_thresh;
 
-  // String p = "900 ";
-  // p += g_touch_min;
-  // p += " ";
-  // p += avg;
-  // p += " ";
-  // p += g_touch_history[g_touch_history_idx % g_touch_history_size];
-  // p += " ";
-  // p += touching ? 1500 : 1200;
-  // p += " 1023";
-  // PL(p);
+  double sum = 0.0;
+  int16_t minVal = 1023;
+  int16_t maxVal = 0;
 
-  if (avg == ANALOG_IN_MAX) {
-    return false;
+  if (g_touch_history_idx >= g_touch_history_idx) {
+    for (auto i = 0; i < g_touch_history_size; i++) {
+      const auto& val = g_touch_history[i];
+      sum += val;
+      minVal = min(minVal, val);
+      maxVal = max(maxVal, val);
+    }
   }
-  if (avg < g_touch_thresh) {
-    return false;
-  }
-  return true;
+  const double avg = sum / double(g_touch_history_size);
+  const auto range = maxVal - minVal;
+  const auto touching = (avg > g_touch_thresh && g_lineValue < LINE_MAX) ||
+                        (avg > g_touch_thresh && range > g_touch_range_thresh);
+
+  String p = "900 ";
+
+  p += g_touch_history[g_touch_history_idx % g_touch_history_size];
+  p += " ";
+
+  p += avg;
+  p += " ";
+
+  p += g_lineValue;
+  p += " ";
+
+  p += range;
+  p += " ";
+
+  p += touching ? 1100 : 1050;
+  p += " 1023";
+  PL(p);
+
+  return touching;
 }
 
 void clearPresets() {
@@ -188,20 +181,21 @@ void tick(float intensity) {
 void loop() {
   const auto servoValue = analogRead(g_servo_pin);
   const auto touchValue = analogRead(g_touch_pin);
-  const auto lineValue = analogRead(g_line_pin);
 
-  const auto error = g_target - lineValue;
+  g_prevLineValue = g_lineValue;
+  g_lineValue = analogRead(g_line_pin);
+
+  const auto error = g_target - g_lineValue;
 
   updateTouchCalibration(touchValue);
-  const uint16_t touch_average = getTouchAverage();
 
   const auto touching = getTouchState();
   if (touching)
   {
-    PL("touching");
+    // PL("touching");
   }
   else {
-    PL("not touching");
+    // PL("not touching");
   }
 
 
@@ -220,17 +214,17 @@ void loop() {
   }
 
   // Presets
-  if (isPreset(lineValue) && lineValue != g_prevLineValue) {
+  if (isPreset(g_lineValue) && g_lineValue != g_prevLineValue) {
     tick(0.8);
   }
 
   // regular ticks
-  // if (lineValue != g_prevLineValue) {
-  //   if (lineValue % 300 == 0)
+  // if (g_lineValue != g_prevLineValue) {
+  //   if (g_lineValue % 300 == 0)
   //   {
   //     tick(1.0);
   //   }
-  //   else if (lineValue % 100 == 0)
+  //   else if (g_lineValue % 100 == 0)
   //   {
   //     tick(0.5);
   //   }
@@ -244,7 +238,7 @@ void loop() {
       g_errorThresh = constrain(read_value, 0, 100);
     }
     else if (read_value == -6666) {
-      addPreset(lineValue);
+      addPreset(g_lineValue);
     }
     else {
       g_touch_thresh = constrain(abs(read_value), 0, ANALOG_IN_MAX);
