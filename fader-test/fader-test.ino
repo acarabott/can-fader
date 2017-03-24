@@ -36,58 +36,67 @@ int16_t g_presets[g_num_presets];
 uint8_t g_preset_index = 0;
 const uint16_t g_preset_error_thresh = 5;
 
-const size_t g_touch_history_size = 100;
-int16_t g_touch_history[g_touch_history_size] = { 0 };
+size_t g_touch_history_size = 100;
+int16_t g_touch_history[100] = { 0 };
+// const size_t g_touch_history_size = 100;
+// int16_t g_touch_history[g_touch_history_size] = { 0 };
+int16_t g_touch_value = 0;
+int16_t g_prev_touch_value = 0;
 size_t g_touch_history_idx = 0;
 uint16_t g_touch_thresh = 980;
 const uint16_t g_touch_range_thresh = 3;
 
 void updateTouchCalibration(auto value) {
   // update avg
+  g_prev_touch_value = g_touch_value;
+  g_touch_value = value;
   g_touch_history[g_touch_history_idx % g_touch_history_size] = value;
   g_touch_history_idx++;
 }
 
 
 bool getTouchState() {
-
+  if (g_touch_history_idx < g_touch_history_idx) { return false; }
 
   double sum = 0.0;
   int16_t minVal = 1023;
   int16_t maxVal = 0;
 
-  if (g_touch_history_idx >= g_touch_history_idx) {
-    for (auto i = 0; i < g_touch_history_size; i++) {
-      const auto& val = g_touch_history[i];
-      sum += val;
-      minVal = min(minVal, val);
-      maxVal = max(maxVal, val);
-    }
+  for (auto i = 0; i < g_touch_history_size; i++) {
+    const auto& val = g_touch_history[i];
+    sum += val;
+    minVal = min(minVal, val);
+    maxVal = max(maxVal, val);
   }
+
   const double avg = sum / double(g_touch_history_size);
   const auto range = maxVal - minVal;
-  const auto touching = (avg > g_touch_thresh && g_lineValue < LINE_MAX) ||
-                        (avg > g_touch_thresh && range > g_touch_range_thresh);
 
-  String p = "900 ";
+  if (g_lineValue < LINE_MAX) {
+    return avg > g_touch_thresh;
+  }
 
-  p += g_touch_history[g_touch_history_idx % g_touch_history_size];
-  p += " ";
+  return avg > g_touch_thresh && range > g_touch_range_thresh;
 
-  p += avg;
-  p += " ";
+  // String p = "900 ";
 
-  p += g_lineValue;
-  p += " ";
+  // p += g_touch_history[g_touch_history_idx % g_touch_history_size];
+  // p += " ";
 
-  p += range;
-  p += " ";
+  // p += avg;
+  // p += " ";
 
-  p += touching ? 1100 : 1050;
-  p += " 1023";
-  PL(p);
+  // p += g_lineValue;
+  // p += " ";
 
-  return touching;
+  // p += range;
+  // p += " ";
+
+  // p += touching ? 1100 : 1050;
+  // p += " 1023";
+  // PL(p);
+
+  // return touching;
 }
 
 void clearPresets() {
@@ -192,10 +201,10 @@ void loop() {
   const auto touching = getTouchState();
   if (touching)
   {
-    // PL("touching");
+    PL("touching");
   }
   else {
-    // PL("not touching");
+    PL("not touching");
   }
 
 
@@ -241,8 +250,10 @@ void loop() {
       addPreset(g_lineValue);
     }
     else {
-      g_touch_thresh = constrain(abs(read_value), 0, ANALOG_IN_MAX);
-      P_LBL("touch thresh: ", g_touch_thresh);
+      g_touch_history_size = constrain(abs(read_value), 0, 100);
+      P_LBL("touch hist size: ", g_touch_history_size);
+      // g_touch_thresh = constrain(abs(read_value), 0, ANALOG_IN_MAX);
+      // P_LBL("touch thresh: ", g_touch_thresh);
       // setTarget(abs(read_value));
     }
   }
