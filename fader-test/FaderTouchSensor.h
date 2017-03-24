@@ -11,6 +11,8 @@ public:
 
   void update(int16_t touchValue);
   bool isTouching();
+  bool tapStarted();
+  bool tapEnded();
 
   void setFluctuationThresh(uint16_t thresh);
   uint16_t getFluctuationThresh();
@@ -23,6 +25,8 @@ protected:
   size_t   m_historyCount;
   uint16_t m_touchMin = 1023;
   uint16_t m_fluctuationThresh = 3;
+  bool     m_isTouching;
+  bool     m_prevTouching;
 };
 
 

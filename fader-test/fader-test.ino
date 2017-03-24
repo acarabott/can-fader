@@ -140,12 +140,13 @@ void loop() {
 
   const auto touching = touchSensor.isTouching();
 
-  if (touching)
+  if (touchSensor.tapStarted())
   {
-    PL("touching");
+    PL("tap start!");
   }
-  else {
-    PL("not touching");
+
+  if (touchSensor.tapEnded()){
+    PL("tap end!");
   }
 
 
