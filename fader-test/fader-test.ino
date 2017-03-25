@@ -99,18 +99,20 @@ void loop() {
 
   const auto error = g_target - g_lineValue;
 
-  touchSensor.update(touchValue);
   faderMover.update(g_lineValue);
+  faderMover.isMoving() ? touchSensor.disable() : touchSensor.enable();
+
+  touchSensor.update(touchValue);
 
   const auto touching = touchSensor.isTouching();
 
   if (touchSensor.tapStarted())
   {
-    // PL("tap start!");
+    PL("tap start!");
   }
 
   if (touchSensor.tapEnded()){
-    // PL("tap end!");
+    PL("tap end!");
   }
 
   // Presets
