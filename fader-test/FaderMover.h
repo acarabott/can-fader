@@ -14,6 +14,8 @@ public:
   void setErrorThresh(uint16_t errorThresh);
 
 protected:
+  enum class TickingState { Not, Forward, Backward, ForwardStop, BackwardStop };
+
   void setDirection(decltype(HIGH) direction);
   void toggleDirection();
   void setMotorPwm(uint8_t value);
@@ -33,6 +35,12 @@ protected:
   uint8_t            m_pwm = 0;
   uint16_t           m_errorThresh = 5;
   decltype(millis()) m_lastMovedTime;
+
+  TickingState       m_tickingState = TickingState::Not;
+  uint8_t            m_curTickDuration = 2;
+  uint8_t            m_curTickPwm = 255;
+  decltype(millis()) m_lastTickedTime;
+
   uint16_t           m_maxPosition = 1019;
   uint8_t            m_motorSlowThresh = 30;
   uint16_t           m_motorSlowPwm = 150;

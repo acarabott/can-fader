@@ -119,13 +119,11 @@ void loop() {
   // }
 
   // regular ticks
-  if (g_lineValue % 300 == 0)
+  if (g_lineValue % 100 == 0)
   {
-    faderMover.tick(100);
-  }
-  else if (g_lineValue % 100 == 0)
-  {
-    faderMover.tick(50);
+    const auto intensity = g_lineValue / 10;
+    P_LBL("tick: ", intensity);
+    faderMover.tick(intensity);
   }
 
 

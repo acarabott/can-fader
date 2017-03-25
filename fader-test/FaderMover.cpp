@@ -3,7 +3,8 @@
 FaderMover::FaderMover(uint8_t motorPin, uint8_t directionPin) :
   m_motorPin(motorPin),
   m_directionPin(directionPin),
-  m_lastMovedTime(millis())
+  m_lastMovedTime(millis()),
+  m_lastTickedTime(millis())
 {
 }
 
@@ -13,7 +14,7 @@ void FaderMover::update(uint16_t position) {
 
   if (m_moving) {
     const auto curTime = millis();
-    const auto timeThresh = m_adjusting ? 5 : 0;
+    const auto timeThresh = m_adjusting ? m_moveInterval : 0;
 
     if (curTime - m_lastMovedTime > timeThresh) {
       m_lastMovedTime = curTime;
@@ -39,6 +40,42 @@ void FaderMover::update(uint16_t position) {
       }
     }
   }
+
+  if (m_tickingState != TickingState::Not) {
+    const auto curTime = millis();
+    if (curTime - m_lastTickedTime > m_curTickDuration) {
+      switch (m_tickingState) {
+        case TickingState::Forward : {
+          setMotorPwm(m_curTickPwm);
+          m_tickingState = TickingState::ForwardStop;
+          break;
+        }
+        case TickingState::ForwardStop : {
+          setMotorPwm(0);
+          m_tickingState = TickingState::Backward;
+          toggleDirection();
+          break;
+        }
+        case TickingState::Backward : {
+          setMotorPwm(m_curTickPwm);
+          m_tickingState = TickingState::BackwardStop;
+          break;
+        }
+        case TickingState::BackwardStop : {
+          setMotorPwm(0);
+          m_tickingState = TickingState::Not;
+          break;
+        }
+        default : {
+          m_tickingState = TickingState::Not;
+          setMotorPwm(0);
+          break;
+        }
+      }
+
+      m_lastTickedTime = curTime;
+    }
+  }
 }
 
 // position 0 - 100
@@ -49,13 +86,10 @@ void FaderMover::moveTo(uint8_t position) {
 void FaderMover::tick(uint8_t intensity) {
   if (m_moving || m_currentPosition == m_prevPosition) return;
 
-  setMotorPwm(255);
-  delay(2);
-  setMotorPwm(0);
-  toggleDirection();
-  setMotorPwm(255);
-  delay(2);
-  setMotorPwm(0);
+  m_tickingState = TickingState::Forward;
+  const auto c_intensity = constrain(intensity, 0, 100);
+  m_curTickDuration = map(c_intensity, 0, 100, 1, 5);
+  m_curTickPwm = map(c_intensity, 0, 100, 127, 255);
 }
 
 void FaderMover::setPosition(uint16_t absPosition) {
