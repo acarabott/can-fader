@@ -25,7 +25,7 @@ protected:
   static const uint8_t historySize = 30;
   int16_t  m_touchValue;
   int16_t  m_history[historySize] = { 0 };
-  size_t   m_historyCount;
+  uint64_t m_historyCount;
   uint16_t m_touchMin = 1023;
   uint16_t m_fluctuationThresh = 3;
   bool     m_isTouching;
