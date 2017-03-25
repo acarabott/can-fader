@@ -41,7 +41,6 @@ void FaderMover::update(uint16_t position) {
 // position 0 - 100
 void FaderMover::moveTo(uint8_t position) {
   m_moving = true;
-  // m_adjusting = true;
   m_target = getAbsPosition(position);
 }
 
