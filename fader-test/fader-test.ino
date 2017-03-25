@@ -121,9 +121,9 @@ void loop() {
   // }
 
   // haptic feedback, increasing intensity with position
-  if (g_lineValue % 100 == 0)
+  if (g_lineValue % 50 == 0)
   {
-    const auto intensity = g_lineValue / 10;
+    const auto intensity = map(g_lineValue, 0, LINE_MAX, 1, 100);
     faderMover.tick(intensity);
   }
 
