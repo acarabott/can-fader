@@ -118,11 +118,10 @@ void loop() {
   //   faderMover.tick(80);
   // }
 
-  // regular ticks
+  // haptic feedback, increasing intensity with position
   if (g_lineValue % 100 == 0)
   {
     const auto intensity = g_lineValue / 10;
-    P_LBL("tick: ", intensity);
     faderMover.tick(intensity);
   }
 
