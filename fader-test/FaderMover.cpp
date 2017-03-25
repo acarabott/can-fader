@@ -83,6 +83,8 @@ void FaderMover::moveTo(uint8_t position) {
   setPosition(getAbsPosition(position));
 }
 
+bool FaderMover::isMoving() { return m_moving; }
+
 void FaderMover::tick(uint8_t intensity) {
   if (m_moving || m_currentPosition == m_prevPosition) return;
 

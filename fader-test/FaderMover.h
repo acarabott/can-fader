@@ -9,6 +9,7 @@ public:
   FaderMover(uint8_t motorPin, uint8_t directionPin);
 
   void update(uint16_t value);
+  bool isMoving();
   void moveTo(uint8_t position);
   void tick(uint8_t intensity);
   void setErrorThresh(uint16_t errorThresh);
