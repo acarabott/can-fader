@@ -27,7 +27,7 @@ protected:
   int16_t  m_history[historySize] = { 0 };
   uint64_t m_historyCount;
   uint16_t m_touchMin = 1023;
-  uint16_t m_fluctuationThresh = 3;
+  uint16_t m_fluctuationThresh = 5;
   bool     m_isTouching;
   bool     m_prevTouching;
   bool     m_enabled;
