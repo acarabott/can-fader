@@ -9,12 +9,11 @@ void FaderTouchSensor::update(int16_t touchValue) {
 
   // calculate from the amount of fluctuation
   // signal varies a lot when touched, not a lot when not touched
-  const auto averageCount = min(historySize, m_historyCount);
+  const auto windowSize = min(historySize, m_historyCount);
 
   int16_t minVal = 1023;
   int16_t maxVal = 0;
-
-  for (auto i = 0; i < averageCount; ++i) {
+  for (auto i = 0; i < windowSize; ++i) {
     const auto& val = m_history[i];
     if (val < minVal) minVal = val;
     if (val > maxVal) maxVal = val;
