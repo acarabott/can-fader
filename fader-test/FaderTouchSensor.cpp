@@ -1,7 +1,3 @@
-#define P(VALUE) Serial.print((VALUE))
-#define PL(VALUE) Serial.println((VALUE))
-#define P_LBL(LABEL, VALUE) Serial.print((LABEL)); Serial.println((VALUE))
-
 #include "FaderTouchSensor.h"
 
 FaderTouchSensor::FaderTouchSensor() {}
