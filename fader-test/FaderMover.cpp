@@ -8,40 +8,59 @@ FaderMover::FaderMover(uint8_t motorPin, uint8_t directionPin) :
 }
 
 void FaderMover::update(uint16_t position) {
-  if (!m_moving) return;
+  m_prevPosition = m_currentPosition;
+  m_currentPosition = position;
 
-  const auto curTime = millis();
-  const auto timeThresh = m_adjusting ? 5 : 0;
+  if (m_moving) {
+    const auto curTime = millis();
+    const auto timeThresh = m_adjusting ? 5 : 0;
 
-  if (curTime - m_lastMovedTime > timeThresh) {
-    m_lastMovedTime = curTime;
-    m_adjusting = !m_adjusting;
+    if (curTime - m_lastMovedTime > timeThresh) {
+      m_lastMovedTime = curTime;
+      m_adjusting = !m_adjusting;
 
-    if (m_adjusting) {
-      const int16_t error = m_target - position;
-      const auto absError = abs(error);
+      if (m_adjusting) {
+        const int16_t error = m_target - position;
+        const auto absError = abs(error);
 
-      if (absError > m_errorThresh) {
-        setDirection(error > 0 ? LOW : HIGH);
-        setMotorPwm(absError > m_motorSlowThresh
-          ? m_motorFastPwm
-          : map(absError, 1, m_motorSlowThresh, m_motorSlowPwm, m_motorFastPwm));
+        if (absError > m_errorThresh) {
+          setDirection(error > 0 ? LOW : HIGH);
+          setMotorPwm(absError > m_motorSlowThresh
+            ? m_motorFastPwm
+            : map(absError, 1, m_motorSlowThresh, m_motorSlowPwm, m_motorFastPwm));
+        }
+        else {
+          setMotorPwm(0);
+          m_moving = false;
+        }
       }
       else {
         setMotorPwm(0);
-        m_moving = false;
       }
-    }
-    else {
-      setMotorPwm(0);
     }
   }
 }
 
 // position 0 - 100
 void FaderMover::moveTo(uint8_t position) {
+  setPosition(getAbsPosition(position));
+}
+
+void FaderMover::tick(uint8_t intensity) {
+  if (m_moving || m_currentPosition == m_prevPosition) return;
+
+  setMotorPwm(255);
+  delay(2);
+  setMotorPwm(0);
+  toggleDirection();
+  setMotorPwm(255);
+  delay(2);
+  setMotorPwm(0);
+}
+
+void FaderMover::setPosition(uint16_t absPosition) {
   m_moving = true;
-  m_target = getAbsPosition(position);
+  m_target = constrain(absPosition, 0, m_maxPosition);
 }
 
 void FaderMover::setErrorThresh(uint16_t errorThresh) {
@@ -49,7 +68,12 @@ void FaderMover::setErrorThresh(uint16_t errorThresh) {
 }
 
 void FaderMover::setDirection(decltype(HIGH) direction) {
+  m_currentDirection = direction;
   digitalWrite(m_directionPin, direction);
+}
+
+void FaderMover::toggleDirection() {
+  setDirection(m_currentDirection == LOW ? HIGH : LOW);
 }
 
 void FaderMover::setMotorPwm(uint8_t value) {

@@ -90,19 +90,6 @@ void setup() {
   Serial.begin(115200);
 }
 
-void tick(float intensity) {
-  const auto c_intensity = constrain(intensity, 0.0, 1.0);
-  uint8_t dur = map(c_intensity, 0.0, 1.0, 1, 5);
-
-  setMotorPwm(255);
-  delay(dur);
-  setMotorPwm(0);
-  toggleDirection();
-  setMotorPwm(255);
-  delay(dur);
-  setMotorPwm(0);
-}
-
 void loop() {
   const auto servoValue = analogRead(g_servo_pin);
   const auto touchValue = analogRead(g_touch_pin);
@@ -127,21 +114,19 @@ void loop() {
   }
 
   // Presets
-  if (isPreset(g_lineValue) && g_lineValue != g_prevLineValue) {
-    tick(0.8);
-  }
+  // if (isPreset(g_lineValue) && g_lineValue != g_prevLineValue) {
+  //   faderMover.tick(80);
+  // }
 
   // regular ticks
-  // if (g_lineValue != g_prevLineValue) {
-  //   if (g_lineValue % 300 == 0)
-  //   {
-  //     tick(1.0);
-  //   }
-  //   else if (g_lineValue % 100 == 0)
-  //   {
-  //     tick(0.5);
-  //   }
-  // }
+  if (g_lineValue % 300 == 0)
+  {
+    faderMover.tick(100);
+  }
+  else if (g_lineValue % 100 == 0)
+  {
+    faderMover.tick(50);
+  }
 
 
 
