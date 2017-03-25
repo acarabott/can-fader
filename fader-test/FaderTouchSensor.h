@@ -13,6 +13,9 @@ public:
   bool isTouching();
   bool tapStarted();
   bool tapEnded();
+  void enable();
+  void disable();
+  bool isEnabled();
 
   void setFluctuationThresh(uint16_t thresh);
   uint16_t getFluctuationThresh();
@@ -27,6 +30,7 @@ protected:
   uint16_t m_fluctuationThresh = 3;
   bool     m_isTouching;
   bool     m_prevTouching;
+  bool     m_enabled;
 };
 
 

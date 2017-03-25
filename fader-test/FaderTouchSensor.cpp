@@ -3,6 +3,8 @@
 FaderTouchSensor::FaderTouchSensor() {}
 
 void FaderTouchSensor::update(int16_t touchValue) {
+  if (!m_enabled) return;
+
   m_touchValue = touchValue;
   m_history[m_historyCount % historySize] = m_touchValue;
   m_historyCount++;
@@ -27,16 +29,20 @@ void FaderTouchSensor::update(int16_t touchValue) {
 
 
 bool FaderTouchSensor::isTouching() {
-  return m_isTouching;
+  return m_isTouching && m_enabled;
 }
 
 bool FaderTouchSensor::tapStarted() {
-  return m_isTouching && !m_prevTouching;
+  return isTouching() && !m_prevTouching;
 }
 
 bool FaderTouchSensor::tapEnded() {
-  return !m_isTouching && m_prevTouching;
+  return !isTouching() && m_prevTouching;
 }
+
+void FaderTouchSensor::enable() { m_enabled = true; }
+void FaderTouchSensor::disable() { m_enabled = false; }
+bool FaderTouchSensor::isEnabled() { return m_enabled; }
 
 void FaderTouchSensor::setFluctuationThresh(uint16_t thresh) {
   m_fluctuationThresh = constrain(thresh, 0, 1023);
