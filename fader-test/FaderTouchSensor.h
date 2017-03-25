@@ -17,9 +17,14 @@ public:
   void disable();
   bool isEnabled();
 
-  void setFluctuationThresh(uint16_t thresh);
-  uint16_t getFluctuationThresh();
+  uint16_t getLowFluctuationThresh();
+  void setLowFluctuationThresh(uint16_t thresh);
 
+  uint16_t getHighFluctuationThresh();
+  void setHighFluctuationThresh(uint16_t thresh);
+
+  uint16_t getFluctuationSplit();
+  void setFluctuationSplit(uint16_t thresh);
 
 protected:
   static const uint8_t historySize = 30;
@@ -27,10 +32,12 @@ protected:
   int16_t  m_history[historySize] = { 0 };
   uint64_t m_historyCount;
   uint16_t m_touchMin = 1023;
-  uint16_t m_fluctuationThresh = 5;
-  bool     m_isTouching;
-  bool     m_prevTouching;
-  bool     m_enabled;
+  uint16_t m_fluctuationSplit = 1000; // the signal range changes dramatically when > this
+  uint16_t m_lowFluctuationThresh = 5; // fluctuation threshold when above threshold
+  uint16_t m_highFluctuationThresh = 3; // fluctuation threshold when below threshold
+  bool     m_isTouching = false;
+  bool     m_prevTouching = false;
+  bool     m_enabled = true;
 };
 
 

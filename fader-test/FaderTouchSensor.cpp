@@ -24,7 +24,12 @@ void FaderTouchSensor::update(int16_t touchValue) {
   // fader position is affecting the touch value
   const auto fluctuation = maxVal - minVal;
   m_prevTouching = m_isTouching;
-  m_isTouching = fluctuation > m_fluctuationThresh;
+
+  const auto thresh = touchValue < m_fluctuationSplit
+    ? m_lowFluctuationThresh
+    : m_highFluctuationThresh;
+
+  m_isTouching = fluctuation > thresh;
 }
 
 
@@ -44,10 +49,23 @@ void FaderTouchSensor::enable() { m_enabled = true; }
 void FaderTouchSensor::disable() { m_enabled = false; }
 bool FaderTouchSensor::isEnabled() { return m_enabled; }
 
-void FaderTouchSensor::setFluctuationThresh(uint16_t thresh) {
-  m_fluctuationThresh = constrain(thresh, 0, 1023);
+uint16_t FaderTouchSensor::getLowFluctuationThresh() {
+  return m_lowFluctuationThresh;
+}
+void FaderTouchSensor::setLowFluctuationThresh(uint16_t thresh) {
+m_lowFluctuationThresh = constrain(thresh, 0, 1023);
 }
 
-uint16_t FaderTouchSensor::getFluctuationThresh() {
-  return m_fluctuationThresh;
+uint16_t FaderTouchSensor::getHighFluctuationThresh() {
+  return m_highFluctuationThresh;
+}
+void FaderTouchSensor::setHighFluctuationThresh(uint16_t thresh) {
+  m_highFluctuationThresh = constrain(thresh, 0, 1023);
+}
+
+uint16_t FaderTouchSensor::getFluctuationSplit() {
+  return m_fluctuationSplit;
+}
+void FaderTouchSensor::setFluctuationSplit(uint16_t thresh) {
+  m_fluctuationSplit = constrain(thresh, 0, 1023);
 }
