@@ -1,4 +1,5 @@
 #include "FaderTouchSensor.h"
+#include "FaderMover.h"
 // TODO
 
 // - Wrap touch states (off/on/max)
@@ -32,6 +33,7 @@ int16_t g_lineValue = 0;
 int16_t g_prevLineValue = 0;
 
 FaderTouchSensor touchSensor;
+FaderMover faderMover(g_motor_pwm_pin, g_motor_direction_pin);
 
 const size_t g_num_presets = 25;
 #define EMPTY_PRESET -1
@@ -88,32 +90,6 @@ void setup() {
   Serial.begin(115200);
 }
 
-void setDirection(decltype(HIGH) direction) {
-  g_direction = direction;
-  digitalWrite(g_motor_direction_pin, direction);
-}
-
-void toggleDirection() {
-  g_direction = g_direction == LOW ? HIGH : LOW;
-  setDirection(g_direction);
-}
-
-void setMotorPwm(uint8_t value) {
-  analogWrite(g_motor_pwm_pin, constrain(value, 0, ANALOG_OUT_MAX));
-}
-
-void moveToOtherEnd() {
-  toggleDirection();
-  setMotorPwm(255);
-  delay(200);
-  setMotorPwm(0);
-}
-
-void setTarget(uint16_t value) {
-  g_moving = true;
-  g_target = constrain(value, 0, LINE_MAX);
-}
-
 void tick(float intensity) {
   const auto c_intensity = constrain(intensity, 0.0, 1.0);
   uint8_t dur = map(c_intensity, 0.0, 1.0, 1, 5);
@@ -137,31 +113,17 @@ void loop() {
   const auto error = g_target - g_lineValue;
 
   touchSensor.update(touchValue);
+  faderMover.update(g_lineValue);
 
   const auto touching = touchSensor.isTouching();
 
   if (touchSensor.tapStarted())
   {
-    PL("tap start!");
+    // PL("tap start!");
   }
 
   if (touchSensor.tapEnded()){
-    PL("tap end!");
-  }
-
-
-  if (g_moving) {
-    if (abs(error) > g_errorThresh) {
-      auto direction = error > 0 ? LOW : HIGH;
-      auto pwm = abs(error) > 30 ? 255 : map(abs(error), 1, 30, 150, 255);
-      setDirection(direction);
-      setMotorPwm(pwm);
-      delay(5);
-      setMotorPwm(0);
-    } else {
-      setMotorPwm(0);
-      g_moving = false;
-    }
+    // PL("tap end!");
   }
 
   // Presets
@@ -192,11 +154,12 @@ void loop() {
       addPreset(g_lineValue);
     }
     else {
+      const auto position = constrain(abs(read_value), 0, 100);
+      faderMover.moveTo(position);
       // g_touch_history_size = constrain(abs(read_value), 0, 100);
       // P_LBL("touch hist size: ", g_touch_history_size);
       // g_touch_thresh = constrain(abs(read_value), 0, ANALOG_IN_MAX);
       // P_LBL("touch thresh: ", g_touch_thresh);
-      // setTarget(abs(read_value));
     }
   }
 }
