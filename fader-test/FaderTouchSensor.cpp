@@ -30,8 +30,19 @@ void FaderTouchSensor::update(int16_t touchValue) {
     : m_highFluctuationThresh;
 
   m_isTouching = fluctuation > thresh;
-}
 
+  // check for double tap
+  const auto now = millis();
+  if (now - m_prevTapTime < m_doubleTapThresh && tapStarted()) {
+    m_doubleTapTriggered = true;
+  }
+  if (tapStarted()) { m_prevTapTime = now; }
+  if (m_doDoubleTap) { m_doDoubleTap = false; }
+  if (tapEnded() && m_doubleTapTriggered) {
+    m_doDoubleTap = true;
+    m_doubleTapTriggered = false;
+  }
+}
 
 bool FaderTouchSensor::isTouching() {
   return m_isTouching && m_enabled;
@@ -43,6 +54,10 @@ bool FaderTouchSensor::tapStarted() {
 
 bool FaderTouchSensor::tapEnded() {
   return !isTouching() && m_prevTouching;
+}
+
+bool FaderTouchSensor::didDoubleTap() {
+  return m_doDoubleTap;
 }
 
 void FaderTouchSensor::enable() { m_enabled = true; }

@@ -116,6 +116,10 @@ void loop() {
     PL("tap end!");
   }
 
+  if (touchSensor.didDoubleTap()) {
+    PL("double tap");
+  }
+
   // Presets
   // if (isPreset(g_lineValue) && g_lineValue != g_prevLineValue) {
   //   faderMover.tick(80);
