@@ -31,17 +31,17 @@ void FaderTouchSensor::update(int16_t touchValue) {
 
   m_isTouching = fluctuation > thresh;
 
-  // check for double tap
+  // check for multi tap
   const auto now = millis();
-  if (now - m_prevTapTime < m_doubleTapThresh && tapStarted()) {
-    m_doubleTapTriggered = true;
+  if (!m_inTapWindow) { m_tapCountResult = 0; }
+  m_inTapWindow  = now - m_prevTapTime < m_multiTapThresh;
+
+  if (tapStarted()) {
+    m_tapCount = m_inTapWindow ? m_tapCount + 1 : 1;
+    m_prevTapTime = now;
   }
-  if (tapStarted()) { m_prevTapTime = now; }
-  if (m_doDoubleTap) { m_doDoubleTap = false; }
-  if (tapEnded() && m_doubleTapTriggered) {
-    m_doDoubleTap = true;
-    m_doubleTapTriggered = false;
-  }
+
+  if (tapEnded()) { m_tapCountResult = m_tapCount; }
 }
 
 bool FaderTouchSensor::isTouching() {
@@ -56,8 +56,8 @@ bool FaderTouchSensor::tapEnded() {
   return !isTouching() && m_prevTouching;
 }
 
-bool FaderTouchSensor::didDoubleTap() {
-  return m_doDoubleTap;
+uint8_t FaderTouchSensor::tapCount() {
+  return m_inTapWindow || m_isTouching ? 0 : m_tapCountResult;
 }
 
 void FaderTouchSensor::enable() { m_enabled = true; }
@@ -68,7 +68,7 @@ uint16_t FaderTouchSensor::getLowFluctuationThresh() {
   return m_lowFluctuationThresh;
 }
 void FaderTouchSensor::setLowFluctuationThresh(uint16_t thresh) {
-m_lowFluctuationThresh = constrain(thresh, 0, 1023);
+  m_lowFluctuationThresh = constrain(thresh, 0, 1023);
 }
 
 uint16_t FaderTouchSensor::getHighFluctuationThresh() {

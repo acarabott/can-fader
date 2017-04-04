@@ -13,7 +13,7 @@ public:
   bool isTouching();
   bool tapStarted();
   bool tapEnded();
-  bool didDoubleTap();
+  uint8_t tapCount();
   void enable();
   void disable();
   bool isEnabled();
@@ -39,10 +39,11 @@ protected:
   bool     m_isTouching = false;
   bool     m_prevTouching = false;
   bool     m_enabled = true;
-  bool     m_doDoubleTap = false;
-  bool     m_doubleTapTriggered = false;
+  bool     m_inTapWindow = false;
   uint64_t m_prevTapTime = 0;
-  uint64_t m_doubleTapThresh = 300;
+  uint64_t m_multiTapThresh = 250;
+  uint8_t  m_tapCount = 0;
+  uint8_t  m_tapCountResult = 0;
 };
 
 
