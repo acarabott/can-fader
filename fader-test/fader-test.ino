@@ -90,6 +90,7 @@ void setup() {
   Serial.begin(115200);
 }
 
+uint8_t g_click = 25;
 void loop() {
   const auto servoValue = analogRead(g_servo_pin);
   const auto touchValue = analogRead(g_touch_pin);
@@ -121,11 +122,11 @@ void loop() {
   // }
 
   // haptic feedback, increasing intensity with position
-  if (g_lineValue % 25 == 0)
-  {
-    const auto intensity = map(g_lineValue, 0, LINE_MAX, 1, 100);
-    faderMover.tick(intensity);
-  }
+  // if (g_lineValue % g_click == 0)
+  // {
+  //   const auto intensity = map(g_lineValue, 0, LINE_MAX, 1, 100);
+  //   faderMover.tick(intensity);
+  // }
 
 
 
@@ -139,6 +140,7 @@ void loop() {
     }
     else {
       const auto position = constrain(abs(read_value), 0, 100);
+      // g_click = abs(read_value);
       faderMover.moveTo(position);
       // g_touch_history_size = constrain(abs(read_value), 0, 100);
       // P_LBL("touch hist size: ", g_touch_history_size);
