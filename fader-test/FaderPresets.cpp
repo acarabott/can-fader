@@ -4,15 +4,20 @@ FaderPresets::FaderPresets() {
   removeAll();
 }
 
-bool FaderPresets::isPreset(int16_t value) {
+bool FaderPresets::isPreset(int16_t value, int8_t* foundIndex, int16_t error) {
   for (auto i = 0; i < maxPresets; ++i) {
-    if (m_presets[i] != emptyPreset && value == m_presets[i]) return true;
+    if (m_presets[i] != emptyPreset && isNear(m_presets[i], value, error)) {
+      *foundIndex = i;
+      return true;
+    }
   }
+  *foundIndex = -1;
   return false;
 }
 
 void FaderPresets::add(int16_t value) {
-  if (isPreset(value)) { return; }
+  int8_t foundIndex;
+  if (isPreset(value, &foundIndex, m_addThresh)) { return; }
 
   m_presets[m_index] = value;
   m_index++;
@@ -34,8 +39,9 @@ void FaderPresets::add(int16_t value) {
 }
 
 void FaderPresets::remove(int16_t value) {
-  for (auto i = 0; i < maxPresets; ++i) {
-    if (isNear(value, m_presets[i])) { m_presets[i] = emptyPreset; }
+  int8_t foundIndex;
+  if (isPreset(value, &foundIndex, m_removeThresh)) {
+    m_presets[foundIndex] = emptyPreset;
   }
 }
 
@@ -49,6 +55,6 @@ bool FaderPresets::inRange(auto value, auto min, auto max) {
   return value >= min && value <= max;
 }
 
-bool FaderPresets::isNear(auto value, auto target) {
-  return inRange(value, target - m_errorThresh, target + m_errorThresh);
+bool FaderPresets::isNear(auto value, auto target, auto error) {
+  return inRange(value, target - error, target + error);
 }
