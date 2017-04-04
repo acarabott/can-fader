@@ -1,5 +1,6 @@
 #include "FaderTouchSensor.h"
 #include "FaderMover.h"
+#include "FaderPresets.h"
 // TODO
 
 // - Wrap touch states (off/on/max)
@@ -34,59 +35,12 @@ int16_t g_prevLineValue = 0;
 
 FaderTouchSensor touchSensor;
 FaderMover faderMover(g_motor_pwm_pin, g_motor_direction_pin);
-
-const size_t g_num_presets = 25;
-#define EMPTY_PRESET -1
-int16_t g_presets[g_num_presets];
-uint8_t g_preset_index = 0;
-const uint16_t g_preset_error_thresh = 5;
-
-void clearPresets() {
-  for (auto i = 0; i < g_num_presets; ++i) {
-    g_presets[i] = EMPTY_PRESET;
-  }
-}
-
-void addPreset(int16_t value) {
-  g_presets[g_preset_index] = value;
-
-  g_preset_index++;
-  g_preset_index %= g_num_presets;
-}
-
-bool inRange(int64_t value, int64_t min, int64_t max) {
-  return value >= min && value <= max;
-}
-
-bool isNear(int64_t value, int64_t target, int64_t error) {
-  return inRange(value, target - error, target + error);
-}
-
-
-void deletePreset(int16_t value) {
-  for (auto i = 0; i < g_num_presets; ++i) {
-    if (isNear(value, g_presets[i], g_preset_error_thresh)) {
-      g_presets[i] = EMPTY_PRESET;
-    }
-  }
-}
-
-bool isPreset(int16_t value) {
-  for (auto i = 0; i < g_num_presets; ++i) {
-    const auto& preset = g_presets[i];
-    if (preset != EMPTY_PRESET &&
-        isNear(value, preset, g_preset_error_thresh)) {
-      return true;
-    }
-  }
-  return false;
-}
+FaderPresets presets;
 
 void setup() {
   pinMode(g_motor_direction_pin, OUTPUT);
   pinMode(g_motor_pwm_pin, OUTPUT);
 
-  clearPresets();
   Serial.begin(115200);
 }
 
@@ -117,13 +71,15 @@ void loop() {
   }
 
   if (touchSensor.didDoubleTap()) {
-    PL("double tap");
+    P_LBL("adding preset: ", g_lineValue);
+    presets.add(g_lineValue);
+  }
+
+  if (presets.isPreset(g_lineValue) && g_lineValue != g_prevLineValue) {
+    faderMover.tick(50);
   }
 
   // Presets
-  // if (isPreset(g_lineValue) && g_lineValue != g_prevLineValue) {
-  //   faderMover.tick(80);
-  // }
 
   // haptic feedback, increasing intensity with position
   // if (g_lineValue % g_click == 0)
@@ -138,9 +94,6 @@ void loop() {
     const auto read_value = Serial.parseInt();
     if (read_value >= 0) {
       g_errorThresh = constrain(read_value, 0, 100);
-    }
-    else if (read_value == -6666) {
-      addPreset(g_lineValue);
     }
     else {
       const auto position = constrain(abs(read_value), 0, 100);
