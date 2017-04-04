@@ -19,10 +19,6 @@ public:
 protected:
   int16_t   m_presets[maxPresets];
   size_t    m_index = 0;
-  uint16_t  m_errorThresh = 5;
-
-  bool inRange(auto value, auto min, auto max); // inclusive range
-  bool isNear(auto value, auto target);
 };
 
 #endif // FADER_PRESETS_H

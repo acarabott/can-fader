@@ -35,7 +35,7 @@ void FaderPresets::add(int16_t value) {
 
 void FaderPresets::remove(int16_t value) {
   for (auto i = 0; i < maxPresets; ++i) {
-    if (isNear(value, m_presets[i])) { m_presets[i] = emptyPreset; }
+    if (value == m_presets[i]) { m_presets[i] = emptyPreset; }
   }
 }
 
@@ -43,12 +43,4 @@ void FaderPresets::removeAll() {
   for (auto i = 0; i < maxPresets; ++i) {
     m_presets[i] = emptyPreset;
   }
-}
-
-bool FaderPresets::inRange(auto value, auto min, auto max) {
-  return value >= min && value <= max;
-}
-
-bool FaderPresets::isNear(auto value, auto target) {
-  return inRange(value, target - m_errorThresh, target + m_errorThresh);
 }
