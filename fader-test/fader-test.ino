@@ -56,28 +56,25 @@ void loop() {
 
   faderMover.update(g_lineValue);
   faderMover.isMoving() ? touchSensor.disable() : touchSensor.enable();
-
   touchSensor.update(touchValue);
-
-  const auto touching = touchSensor.isTouching();
-
-  if (touchSensor.tapStarted())
-  {
-    PL("tap start!");
-  }
-
-  if (touchSensor.tapEnded()){
-    PL("tap end!");
-  }
-
-  if (touchSensor.didDoubleTap()) {
-    P_LBL("adding preset: ", g_lineValue);
-    presets.add(g_lineValue);
-  }
 
   if (presets.isPreset(g_lineValue) && g_lineValue != g_prevLineValue) {
     faderMover.tick(20);
   }
+
+  const auto touching = touchSensor.isTouching();
+  if (touchSensor.tapStarted()) { PL("touch start"); }
+  if (touchSensor.tapEnded()) { PL("touch end"); }
+
+  const auto tapCount = touchSensor.tapCount();
+  if (tapCount == 2) {
+    presets.add(g_lineValue);
+  }
+  else if (tapCount == 3) {
+    presets.remove(g_lineValue);
+    faderMover.tick(100);
+  }
+
 
   // Presets
 
