@@ -76,7 +76,7 @@ void loop() {
   }
 
   if (presets.isPreset(g_lineValue) && g_lineValue != g_prevLineValue) {
-    faderMover.tick(50);
+    faderMover.tick(20);
   }
 
   // Presets
