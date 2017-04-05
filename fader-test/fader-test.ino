@@ -23,7 +23,10 @@ const uint8_t g_motor_pwm_pin = 3;
 
 int16_t g_lineValue = 0;
 int16_t g_prevLineValue = 0;
-uint8_t g_click = 25;
+
+bool g_tactileEnabled = true;
+uint8_t g_click = 50;
+uint8_t g_maxClickIntensity = 90;
 
 FaderTouchSensor touchSensor;
 FaderMover faderMover(g_motor_pwm_pin, g_motor_direction_pin);
@@ -47,7 +50,10 @@ void loop() {
   faderMover.isMoving() ? touchSensor.disable() : touchSensor.enable();
   touchSensor.update(touchValue);
 
-  if (presets.isPreset(g_lineValue) && g_lineValue != g_prevLineValue) {
+  if (presets.isPreset(g_lineValue) &&
+      g_lineValue != g_prevLineValue &&
+      !g_tactileEnabled)
+  {
     faderMover.tick(20);
   }
 
@@ -59,26 +65,35 @@ void loop() {
 
   if (tapCount > 1) {
     auto success = false;
-    if (tapCount == 2) { success = presets.add(g_lineValue); }
-    if (tapCount == 3) { success = presets.remove(g_lineValue); }
+    if (tapCount == 2)      { success = presets.add(g_lineValue); }
+    else if (tapCount == 3) { success = presets.remove(g_lineValue); }
+    else if (tapCount == 5) {
+      g_tactileEnabled = !g_tactileEnabled;
+      success = true;
+    }
 
     if (success) { faderMover.feedback(g_lineValue, 100); }
   }
 
   // haptic feedback, increasing intensity with position
-  // if (g_lineValue % g_click == 0)
-  // {
-  //   const auto intensity = map(g_lineValue, 0, LINE_MAX, 1, 100);
-  //   faderMover.tick(intensity);
-  // }
+  if (g_tactileEnabled &&  g_lineValue % g_click == 0) {
+    const auto intensity = map(g_lineValue, 0, LINE_MAX, 1, g_maxClickIntensity);
+    faderMover.tick(intensity);
+  }
 
 
 
   if (Serial.available() > 0) {
     const auto read_value = Serial.parseInt();
-    const auto position = constrain(read_value, 0, ANALOG_IN_MAX);
-    // g_click = abs(read_value);
-    P_LBL("position: ", position);
-    faderMover.moveTo(position);
+
+    if (read_value > 0) {
+      // const auto position = constrain(read_value, 0, ANALOG_IN_MAX);
+      // P_LBL("position: ", position);
+      // faderMover.moveTo(position);
+      g_click = abs(read_value);
+    }
+    else {
+      g_maxClickIntensity = constrain(abs(read_value), 0, 100);
+    }
   }
 }
