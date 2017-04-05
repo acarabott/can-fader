@@ -57,7 +57,7 @@ bool FaderTouchSensor::tapEnded() {
 }
 
 uint8_t FaderTouchSensor::tapCount() {
-  return m_inTapWindow || m_isTouching ? 0 : m_tapCountResult;
+  return m_inTapWindow || m_isTouching || !m_enabled ? 0 : m_tapCountResult;
 }
 
 void FaderTouchSensor::enable() { m_enabled = true; }
