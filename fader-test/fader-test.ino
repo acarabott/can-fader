@@ -22,6 +22,11 @@ const uint8_t g_motor_direction_pin = 12;
 const uint8_t g_motor_pwm_pin = 3;
 
 auto g_prevTime = millis();
+auto g_actionSet = false;
+decltype(millis()) g_actionTime = 0;
+typedef void (*voidFuncPtr)(void);
+static volatile voidFuncPtr g_action = [](){};
+int16_t g_moveToValue = 0;
 
 int16_t g_lineValue = 0;
 int16_t g_prevLineValue = 0;
@@ -58,16 +63,35 @@ void loop() {
   if (touchSensor.tapEnded()) { PL("touch end"); }
 
   const auto tapCount = touchSensor.tapCount();
-  if (tapCount == 2) {
-    presets.add(g_lineValue);
-  }
-  else if (tapCount == 3) {
-    presets.remove(g_lineValue);
-    faderMover.tick(100);
+
+  if (tapCount > 1) {
+    auto tapAction = [](){};
+    auto success = false;
+    if (tapCount == 2) { success = presets.add(g_lineValue); }
+    if (tapCount == 3) { success = presets.remove(g_lineValue); }
+
+    if (success){
+      const auto jiggleDist = 150;
+      const auto dest = g_lineValue <= LINE_MAX - jiggleDist
+        ? g_lineValue + jiggleDist
+        : g_lineValue - jiggleDist;
+
+      faderMover.moveTo(dest);
+      g_actionSet = true;
+      g_actionTime = millis() + 100;
+      g_moveToValue = g_lineValue;
+      g_action = [] () { faderMover.moveTo(g_moveToValue); };
+    }
   }
 
-
-  // Presets
+  // timed action
+  if (g_actionSet) {
+    const auto now = millis();
+    if (now > g_actionTime) {
+      g_action();
+      g_actionSet = false;
+    }
+  }
 
   // haptic feedback, increasing intensity with position
   // if (g_lineValue % g_click == 0)
