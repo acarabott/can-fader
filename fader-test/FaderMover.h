@@ -10,7 +10,8 @@ public:
 
   void update(uint16_t value);
   bool isMoving();
-  void moveTo(uint8_t position);
+  void moveTo(uint16_t position);
+  void moveToNorm(uint8_t position);
   void tick(uint8_t intensity);
   void setErrorThresh(uint16_t errorThresh);
 

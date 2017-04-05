@@ -79,7 +79,11 @@ void FaderMover::update(uint16_t position) {
 }
 
 // position 0 - 100
-void FaderMover::moveTo(uint8_t position) {
+void FaderMover::moveTo(uint16_t position) {
+  setPosition(position);
+}
+
+void FaderMover::moveToNorm(uint8_t position) {
   setPosition(getAbsPosition(position));
 }
 
