@@ -21,17 +21,11 @@ const uint8_t g_line_pin = A4;
 const uint8_t g_motor_direction_pin = 12;
 const uint8_t g_motor_pwm_pin = 3;
 
-auto g_direction = HIGH;
-int16_t g_target = 512;
-
 auto g_prevTime = millis();
-auto g_interval = 20; // 50Hz AC
 
-auto g_errorThresh = 5;
-
-auto g_moving = false;
 int16_t g_lineValue = 0;
 int16_t g_prevLineValue = 0;
+uint8_t g_click = 25;
 
 FaderTouchSensor touchSensor;
 FaderMover faderMover(g_motor_pwm_pin, g_motor_direction_pin);
@@ -44,15 +38,12 @@ void setup() {
   Serial.begin(115200);
 }
 
-uint8_t g_click = 25;
 void loop() {
   const auto servoValue = analogRead(g_servo_pin);
   const auto touchValue = analogRead(g_touch_pin);
 
   g_prevLineValue = g_lineValue;
   g_lineValue = analogRead(g_line_pin);
-
-  const auto error = g_target - g_lineValue;
 
   faderMover.update(g_lineValue);
   faderMover.isMoving() ? touchSensor.disable() : touchSensor.enable();
@@ -89,17 +80,9 @@ void loop() {
 
   if (Serial.available() > 0) {
     const auto read_value = Serial.parseInt();
-    if (read_value >= 0) {
-      g_errorThresh = constrain(read_value, 0, 100);
-    }
-    else {
-      const auto position = constrain(abs(read_value), 0, 100);
-      // g_click = abs(read_value);
-      faderMover.moveTo(position);
-      // g_touch_history_size = constrain(abs(read_value), 0, 100);
-      // P_LBL("touch hist size: ", g_touch_history_size);
-      // g_touch_thresh = constrain(abs(read_value), 0, ANALOG_IN_MAX);
-      // P_LBL("touch thresh: ", g_touch_thresh);
-    }
+    const auto position = constrain(read_value, 0, ANALOG_IN_MAX);
+    // g_click = abs(read_value);
+    P_LBL("position: ", position);
+    faderMover.moveTo(position);
   }
 }
