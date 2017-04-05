@@ -64,6 +64,7 @@ void loop() {
   const auto tapCount = touchSensor.tapCount();
 
   if (tapCount > 1) {
+    P_LBL("tap count: ", tapCount);
     auto success = false;
     if (tapCount == 2)      { success = presets.add(g_lineValue); }
     else if (tapCount == 3) { success = presets.remove(g_lineValue); }
