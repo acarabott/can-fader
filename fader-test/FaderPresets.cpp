@@ -15,9 +15,9 @@ bool FaderPresets::isPreset(int16_t value, int8_t* foundIndex, int16_t error) {
   return false;
 }
 
-void FaderPresets::add(int16_t value) {
+bool FaderPresets::add(int16_t value) {
   int8_t foundIndex;
-  if (isPreset(value, &foundIndex, m_addThresh)) { return; }
+  if (isPreset(value, &foundIndex, m_addThresh)) { return false; }
 
   m_presets[m_index] = value;
   m_index++;
@@ -36,13 +36,17 @@ void FaderPresets::add(int16_t value) {
     }
     // if we don't find an empty slot, we'll just overwrite the current index...
   }
+
+  return true;
 }
 
-void FaderPresets::remove(int16_t value) {
+bool FaderPresets::remove(int16_t value) {
   int8_t foundIndex;
   if (isPreset(value, &foundIndex, m_removeThresh)) {
     m_presets[foundIndex] = emptyPreset;
+    return true;
   }
+  return false;
 }
 
 void FaderPresets::removeAll() {

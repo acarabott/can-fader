@@ -12,8 +12,8 @@ public:
   FaderPresets();
 
   bool isPreset(int16_t value, int8_t* foundIndex = nullptr, int16_t error = 0);
-  void add(int16_t value);
-  void remove(int16_t value);
+  bool add(int16_t value);
+  bool remove(int16_t value);
   void removeAll();
 
 protected:
