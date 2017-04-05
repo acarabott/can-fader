@@ -13,6 +13,7 @@ public:
   void moveTo(uint16_t position);
   void moveToNorm(uint8_t position);
   void tick(uint8_t intensity);
+  void feedback(uint16_t position, uint8_t intensity);
   void setErrorThresh(uint16_t errorThresh);
 
 protected:
@@ -21,7 +22,7 @@ protected:
   void setDirection(decltype(HIGH) direction);
   void toggleDirection();
   void setMotorPwm(uint8_t value);
-  void setPosition(uint16_t absPosition);
+  void setPosition(uint16_t absPosition, uint64_t delay = 0);
 
   uint16_t getAbsPosition(uint8_t normPosition);
   uint8_t getNormPosition(uint16_t absPosition);
@@ -34,6 +35,9 @@ protected:
   bool               m_moving = false;
   bool               m_adjusting = false;
   uint16_t           m_target = 0;
+  decltype(millis()) m_delayedTime = 0;
+  uint16_t           m_delayedTarget = 0;
+  bool               m_delayedSet = false;
   uint8_t            m_pwm = 0;
   uint16_t           m_errorThresh = 5;
   decltype(millis()) m_lastMovedTime;

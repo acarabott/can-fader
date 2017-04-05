@@ -12,12 +12,19 @@ void FaderMover::update(uint16_t position) {
   m_prevPosition = m_currentPosition;
   m_currentPosition = position;
 
+  const auto now = millis();
+
+  if (m_delayedSet && now > m_delayedTime) {
+    m_moving = true;
+    m_target = m_delayedTarget;
+    m_delayedSet = false;
+  }
+
   if (m_moving) {
-    const auto curTime = millis();
     const auto timeThresh = m_adjusting ? m_moveInterval : 0;
 
-    if (curTime - m_lastMovedTime > timeThresh) {
-      m_lastMovedTime = curTime;
+    if (now - m_lastMovedTime > timeThresh) {
+      m_lastMovedTime = now;
       m_adjusting = !m_adjusting;
 
       if (m_adjusting) {
@@ -78,11 +85,11 @@ void FaderMover::update(uint16_t position) {
   }
 }
 
-// position 0 - 100
 void FaderMover::moveTo(uint16_t position) {
   setPosition(position);
 }
 
+// position 0 - 100
 void FaderMover::moveToNorm(uint8_t position) {
   setPosition(getAbsPosition(position));
 }
@@ -98,9 +105,29 @@ void FaderMover::tick(uint8_t intensity) {
   m_curTickPwm = map(c_intensity, 0, 100, 127, 255);
 }
 
-void FaderMover::setPosition(uint16_t absPosition) {
+void FaderMover::feedback(uint16_t position, uint8_t intensity) {
+  if (m_moving) return;
+
+  const auto maxOffset = 150;
+  const auto c_intensity = constrain(intensity, 0, 100);
+  const auto offset = map(c_intensity, 0, 100, 0, maxOffset);
+  const auto dest = position + (maxOffset < m_maxPosition ? offset : -offset);
+
+  setPosition(dest);
+  setPosition(position, 150);
+}
+
+void FaderMover::setPosition(uint16_t absPosition, uint64_t delay) {
   m_moving = true;
-  m_target = constrain(absPosition, 0, m_maxPosition);
+
+  const auto constrained = constrain(absPosition, 0, m_maxPosition);
+
+  if (delay == 0) { m_target = constrained; }
+  else {
+    m_delayedTarget = constrained;
+    m_delayedTime = millis() + delay;
+    m_delayedSet = true;
+  }
 }
 
 void FaderMover::setErrorThresh(uint16_t errorThresh) {
