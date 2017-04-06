@@ -13,7 +13,7 @@ public:
   void moveTo(uint16_t position);
   void moveToNorm(uint8_t position);
   void tick(uint8_t intensity);
-  void feedback(uint16_t position, uint8_t intensity);
+  void feedback(uint16_t position, uint8_t intensity, uint64_t delay = 150);
   void setErrorThresh(uint16_t errorThresh);
 
 protected:
