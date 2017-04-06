@@ -24,7 +24,7 @@ const uint8_t g_motor_pwm_pin = 3;
 int16_t g_lineValue = 0;
 int16_t g_prevLineValue = 0;
 
-bool g_tactileEnabled = true;
+bool g_tactileEnabled = false;
 uint8_t g_click = 50;
 uint8_t g_maxClickIntensity = 90;
 
