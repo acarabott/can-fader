@@ -66,14 +66,20 @@ void loop() {
   if (tapCount > 1) {
     P_LBL("tap count: ", tapCount);
     auto success = false;
+    uint64_t delay = 150;
+
     if (tapCount == 2)      { success = presets.add(g_lineValue); }
     else if (tapCount == 3) { success = presets.remove(g_lineValue); }
+    else if (tapCount == 4) {
+      success = presets.removeAll();
+      delay = 500;
+    }
     else if (tapCount == 5) {
       g_tactileEnabled = !g_tactileEnabled;
       success = true;
     }
 
-    if (success) { faderMover.feedback(g_lineValue, 100); }
+    if (success) { faderMover.feedback(g_lineValue, 100, delay); }
   }
 
   // haptic feedback, increasing intensity with position
