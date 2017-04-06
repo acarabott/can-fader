@@ -49,10 +49,11 @@ bool FaderPresets::remove(int16_t value) {
   return false;
 }
 
-void FaderPresets::removeAll() {
+bool FaderPresets::removeAll() {
   for (auto i = 0; i < maxPresets; ++i) {
     m_presets[i] = emptyPreset;
   }
+  return true;
 }
 
 bool FaderPresets::inRange(auto value, auto min, auto max) {

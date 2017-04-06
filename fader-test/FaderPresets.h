@@ -14,7 +14,7 @@ public:
   bool isPreset(int16_t value, int8_t* foundIndex = nullptr, int16_t error = 0);
   bool add(int16_t value);
   bool remove(int16_t value);
-  void removeAll();
+  bool removeAll();
 
 protected:
   int16_t   m_presets[maxPresets];
