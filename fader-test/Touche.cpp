@@ -58,6 +58,12 @@ void Touche::update() {
     }
   }
 
+  const auto now = millis();
+
+  if (m_training && now - m_trainingStartTime > m_trainingDuration) {
+    stopTraining();
+  }
+
   // check if gesture changed
   // this has a lag defined by m_gestureLag, as 'low pass filter'
   // implemented with an internal state and a public state
@@ -77,10 +83,12 @@ void Touche::update() {
   m_previousGesture = m_currentGesture;
 }
 
-void Touche::startTraining(uint8_t gesture) {
+void Touche::startTraining(uint8_t gesture, uint64_t duration) {
   if (gesture >= 0 && gesture < numGestures) {
     m_training = true;
     m_trainingGesture = gesture;
+    m_trainingStartTime = millis();
+    m_trainingDuration = duration;
   }
 }
 

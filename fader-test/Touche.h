@@ -33,7 +33,7 @@ public:
 
   void    setup();
   void    update();
-  void    startTraining(uint8_t gesture);
+  void    startTraining(uint8_t gesture, uint64_t duration = 1000);
   void    stopTraining();
   bool    training();
   bool    gestureChanged();
@@ -58,6 +58,9 @@ protected:
   float m_gesturePoints[numGestures][numGesturePoints];
 
   bool      m_training = false;
+  uint64_t  m_trainingStartTime = 0;
+  uint64_t  m_trainingDuration = 1000;
+
   bool      m_gestureChanged = false;
   uint8_t   m_trainingGesture = 0;
   uint8_t   m_previousGesture = 0;
