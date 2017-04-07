@@ -1,10 +1,7 @@
 #include "FaderTouchSensor.h"
 #include "FaderMover.h"
 #include "FaderPresets.h"
-// TODO
-
-// - Wrap touch states (off/on/max)
-// - Wrap whole slider as class
+#include "Touche.h"
 
 #define P(VALUE) Serial.print((VALUE))
 #define PL(VALUE) Serial.println((VALUE))
@@ -31,10 +28,14 @@ uint8_t g_maxClickIntensity = 90;
 FaderTouchSensor touchSensor;
 FaderMover faderMover(g_motor_pwm_pin, g_motor_direction_pin);
 FaderPresets presets;
+Touche touche(A5);
+bool g_toucheTraining = false;
 
 void setup() {
   pinMode(g_motor_direction_pin, OUTPUT);
   pinMode(g_motor_pwm_pin, OUTPUT);
+
+  touche.setup();
 
   Serial.begin(115200);
 }
@@ -61,10 +62,24 @@ void loop() {
   if (touchSensor.tapStarted()) { PL("touch start"); }
   if (touchSensor.tapEnded()) { PL("touch end"); }
 
+  // P_LBL("touching: ", touching);
+  // P_LBL("touch value: ", touchValue);
+  String s(900);
+  s += ", ";
+
+  s += touchValue;
+  s += ", ";
+
+  s += touching ? 1050 : 1075;
+  s += ", ";
+
+  s += 1100;
+  PL(s);
+
   const auto tapCount = touchSensor.tapCount();
 
-  if (tapCount > 1) {
-    P_LBL("tap count: ", tapCount);
+  if (tapCount > 1 && false) {
+    // P_LBL("tap count: ", tapCount);
     auto success = false;
     uint64_t delay = 150;
 
@@ -89,6 +104,7 @@ void loop() {
   }
 
 
+  touche.update();
 
   if (Serial.available() > 0) {
     const auto read_value = Serial.parseInt();
@@ -97,10 +113,24 @@ void loop() {
       // const auto position = constrain(read_value, 0, ANALOG_IN_MAX);
       // P_LBL("position: ", position);
       // faderMover.moveTo(position);
-      g_click = abs(read_value);
+      // g_click = abs(read_value);
+      touche.startTraining(read_value);
+      g_toucheTraining = true;
     }
     else {
       g_maxClickIntensity = constrain(abs(read_value), 0, 100);
     }
   }
+
+  if (g_toucheTraining && !touche.training()) {
+    g_toucheTraining = false;
+    Serial.println("finished training");
+  }
+
+  if (touche.gestureChanged()) {
+    const auto gesture = touche.currentGesture();
+    Serial.print("gesture changed: ");
+    Serial.println(gesture);
+  }
+
 }
