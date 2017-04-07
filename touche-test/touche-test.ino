@@ -2,6 +2,7 @@
 
 Touche touche(A5);
 
+bool training = false;
 void setup()
 {
   touche.setup();
@@ -17,6 +18,12 @@ void loop()
     Serial.print("starting training: ");
     Serial.println(readValue);
     touche.startTraining(readValue);
+    training = true;
+  }
+
+  if (training && !touche.training()) {
+    training = false;
+    Serial.println("finished training");
   }
 
   if (touche.gestureChanged()) {
