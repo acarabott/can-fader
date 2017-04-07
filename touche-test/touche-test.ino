@@ -18,10 +18,10 @@ void loop()
   const auto now = millis();
 
   if (Serial.available() > 0) {
-    const auto trainingIdx = Serial.parseInt();
+    const auto readValue = Serial.parseInt();
     Serial.print("starting training: ");
-    Serial.println(trainingIdx);
-    touche.startTraining(trainingIdx);
+    Serial.println(readValue);
+    touche.startTraining(readValue);
     trainingStartTime = now;
   }
 

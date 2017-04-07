@@ -58,7 +58,22 @@ void Touche::update() {
     }
   }
 
-  m_gestureChanged = m_currentGesture != m_previousGesture;
+  // check if gesture changed
+  // this has a lag defined by m_gestureLag, as 'low pass filter'
+  // implemented with an internal state and a public state
+  if (!m_gestureChanged && m_currentGesture != m_previousGesture) {
+    m_gestureChanged = true;
+    m_gestureChangedTime = millis();
+  }
+
+  m_gestureChangedPublic = false;
+  const auto lagWindowFinished = millis() - m_gestureChangedTime > m_gestureLag;
+  if (m_gestureChanged && lagWindowFinished) {
+    m_gestureChanged = false;
+    m_currentGesturePublic = m_currentGesture;
+    m_gestureChangedPublic = true;
+  }
+
   m_previousGesture = m_currentGesture;
 }
 
@@ -73,9 +88,9 @@ void Touche::stopTraining() { m_training = false; }
 
 bool Touche::training() { return m_training; }
 
-bool Touche::gestureChanged() { return m_gestureChanged; }
+bool Touche::gestureChanged() { return m_gestureChangedPublic; }
 
-uint8_t Touche::currentGesture() { return m_currentGesture; }
+uint8_t Touche::currentGesture() { return m_currentGesturePublic; }
 
 void Touche::clearGestures() {
   for (auto i = 0; i < numGestures; ++i) {

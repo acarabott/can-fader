@@ -62,7 +62,11 @@ protected:
   uint8_t   m_trainingGesture = 0;
   uint8_t   m_previousGesture = 0;
   uint8_t   m_currentGesture = 0;
+  uint16_t  m_gestureLag = 100;
+  uint64_t  m_gestureChangedTime = 0;
 
+  uint8_t   m_currentGesturePublic = 0;
+  bool      m_gestureChangedPublic = false;
 };
 
 #endif // TOUCHE_H
