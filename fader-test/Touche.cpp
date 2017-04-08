@@ -108,6 +108,10 @@ void Touche::clearGestures() {
   }
 }
 
+void Touche::setLag(uint16_t lag) {
+  m_gestureLag = constrain(lag, 0, 1000);
+}
+
 float Touche::getDistance(float x1, float y1, float x2, float y2) {
   return abs(x1 - x2) + abs(y1 - y2);
 }

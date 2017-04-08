@@ -39,6 +39,7 @@ public:
   bool    gestureChanged();
   uint8_t currentGesture();
   void    clearGestures();
+  void    setLag(uint16_t lag);
 
   static const uint8_t signalPin = 9;
   static const uint8_t syncPin = 8;
