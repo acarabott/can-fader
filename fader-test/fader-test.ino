@@ -30,6 +30,7 @@ FaderMover faderMover(g_motor_pwm_pin, g_motor_direction_pin);
 FaderPresets presets;
 Touche touche(A5);
 bool g_toucheTraining = false;
+bool g_prevGesture = 0;
 
 void setup() {
   pinMode(g_motor_direction_pin, OUTPUT);
@@ -59,22 +60,32 @@ void loop() {
   }
 
   const auto touching = touchSensor.isTouching();
-  if (touchSensor.tapStarted()) { PL("touch start"); }
-  if (touchSensor.tapEnded()) { PL("touch end"); }
+  // if (touchSensor.tapStarted()) { PL("touch start"); }
+  // if (touchSensor.tapEnded()) { PL("touch end"); }
 
-  // P_LBL("touching: ", touching);
-  // P_LBL("touch value: ", touchValue);
-  String s(900);
-  s += ", ";
+  touche.update();
 
-  s += touchValue;
-  s += ", ";
+  if (g_toucheTraining && !touche.training()) {
+    g_toucheTraining = false;
+    Serial.println("finished training");
+  }
 
-  s += touching ? 1050 : 1075;
-  s += ", ";
+  if (touche.gestureChanged()) {
+    const auto gesture = touche.currentGesture();
 
-  s += 1100;
-  PL(s);
+    P_LBL("gesture: ", gesture);
+
+    if (gesture == 1 && g_prevGesture == 0) {
+      PL("touch start");
+    }
+    else if (gesture == 0 && g_prevGesture == 1) {
+      P_LBL("prev: ", g_prevGesture);
+      PL("touch end");
+    }
+
+    P_LBL("assigning: ", gesture);
+    g_prevGesture = gesture;
+  }
 
   const auto tapCount = touchSensor.tapCount();
 
@@ -103,34 +114,21 @@ void loop() {
     faderMover.tick(intensity);
   }
 
-
-  touche.update();
-
   if (Serial.available() > 0) {
     const auto read_value = Serial.parseInt();
 
-    if (read_value > 0) {
+    if (read_value >= 0) {
       // const auto position = constrain(read_value, 0, ANALOG_IN_MAX);
       // P_LBL("position: ", position);
       // faderMover.moveTo(position);
       // g_click = abs(read_value);
+      P_LBL("training: ", read_value);
       touche.startTraining(read_value);
       g_toucheTraining = true;
     }
     else {
-      g_maxClickIntensity = constrain(abs(read_value), 0, 100);
+      // g_maxClickIntensity = constrain(abs(read_value), 0, 100);
+      touche.setLag(abs(read_value));
     }
   }
-
-  if (g_toucheTraining && !touche.training()) {
-    g_toucheTraining = false;
-    Serial.println("finished training");
-  }
-
-  if (touche.gestureChanged()) {
-    const auto gesture = touche.currentGesture();
-    Serial.print("gesture changed: ");
-    Serial.println(gesture);
-  }
-
 }
