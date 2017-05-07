@@ -23,7 +23,7 @@ protected:
   uint8_t  m_pin = 0;
   uint16_t m_faderMax = 1019;
   uint16_t m_touchValue = 0;
-  uint16_t m_touchThresh = 700;
+  uint16_t m_touchThresh = 800;
   bool     m_isTouching = false;
   bool     m_prevTouching = false;
   bool     m_enabled = true;
