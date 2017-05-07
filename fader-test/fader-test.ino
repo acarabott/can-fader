@@ -25,7 +25,7 @@ bool g_tactileEnabled = false;
 uint8_t g_click = 50;
 uint8_t g_maxClickIntensity = 90;
 
-FaderTouchSensor touchSensor;
+FaderTouchSensor touchSensor(g_touch_pin);
 FaderMover faderMover(g_motor_pwm_pin, g_motor_direction_pin);
 FaderPresets presets;
 Touche touche(g_gesture_pin);
