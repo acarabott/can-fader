@@ -109,7 +109,7 @@ void FaderMover::tick(uint8_t intensity) {
 void FaderMover::feedback(uint16_t position, uint8_t intensity, uint64_t delay) {
   if (m_moving) return;
 
-  const auto maxOffset = m_maxPosition;
+  const auto maxOffset = 100;
   const auto c_intensity = constrain(intensity, 0, 100);
   const auto offset = map(c_intensity, 0, 100, 0, maxOffset);
   const auto dest = position + (maxOffset < m_maxPosition ? offset : -offset);
