@@ -33,9 +33,10 @@ void FaderMover::update(uint16_t position) {
 
         if (absError > m_errorThresh) {
           setDirection(error > 0 ? HIGH : LOW);
-          setMotorPwm(absError > m_motorSlowThresh
-            ? m_motorFastPwm
-            : map(absError, 1, m_motorSlowThresh, m_motorSlowPwm, m_motorFastPwm));
+
+          setSpeed(absError > m_motorSlowThresh
+            ? 100
+            : map(absError, 1, m_motorSlowThresh, 0, 100));
         }
         else {
           stopMotor();
@@ -53,7 +54,7 @@ void FaderMover::update(uint16_t position) {
     if (curTime - m_lastTickedTime > m_curTickDuration) {
       switch (m_tickingState) {
         case TickingState::Forward : {
-          setMotorPwm(m_curTickPwm);
+          setSpeed(m_curTickSpeed);
           m_tickingState = TickingState::ForwardStop;
           break;
         }
@@ -64,7 +65,7 @@ void FaderMover::update(uint16_t position) {
           break;
         }
         case TickingState::Backward : {
-          setMotorPwm(m_curTickPwm);
+          setSpeed(m_curTickSpeed);
           m_tickingState = TickingState::BackwardStop;
           break;
         }
@@ -102,7 +103,7 @@ void FaderMover::tick(uint8_t intensity) {
   m_tickingState = TickingState::Forward;
   const auto c_intensity = constrain(intensity, 0, 100);
   m_curTickDuration = map(c_intensity, 0, 100, 1, 5);
-  m_curTickPwm = map(c_intensity, 0, 100, 127, 255);
+  m_curTickSpeed = c_intensity;
 }
 
 void FaderMover::feedback(uint16_t position, uint8_t intensity, uint64_t delay) {
@@ -131,7 +132,7 @@ void FaderMover::setPosition(uint16_t absPosition, uint64_t delay) {
 }
 
 void FaderMover::stopMotor() {
-  setMotorPwm(0);
+  setSpeed(0);
 }
 
 void FaderMover::setErrorThresh(uint16_t errorThresh) {
@@ -147,9 +148,14 @@ void FaderMover::toggleDirection() {
   setDirection(m_currentDirection == LOW ? HIGH : LOW);
 }
 
-void FaderMover::setMotorPwm(uint8_t value) {
-  const auto constrained = constrain(value, 0, 255);
-  const auto pwm = m_currentDirection == LOW ? constrained : 255 - constrained;
+void FaderMover::setSpeed(uint8_t speed) {
+  const uint8_t constrained = constrain(speed, 0, 100);
+  const uint8_t scaled = map(constrained, 0, 100, 0, 255);
+  const uint8_t pwm = m_currentDirection == LOW ? scaled : 255 - scaled;
+  setMotorPwm(pwm);
+}
+
+void FaderMover::setMotorPwm(uint8_t pwm) {
   analogWrite(m_motorPin, pwm);
 }
 

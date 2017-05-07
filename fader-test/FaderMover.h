@@ -21,6 +21,7 @@ protected:
 
   void setDirection(decltype(HIGH) direction);
   void toggleDirection();
+  void setSpeed(uint8_t speed);       // 0 - 100
   void setMotorPwm(uint8_t value);
   void setPosition(uint16_t absPosition, uint64_t delay = 0);
   void stopMotor();
@@ -45,7 +46,7 @@ protected:
 
   TickingState       m_tickingState = TickingState::Not;
   uint8_t            m_curTickDuration = 2;
-  uint8_t            m_curTickPwm = 255;
+  uint8_t            m_curTickSpeed = 100;
   decltype(millis()) m_lastTickedTime;
 
   uint16_t           m_maxPosition = 1019;
