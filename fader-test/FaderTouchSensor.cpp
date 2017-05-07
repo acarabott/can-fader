@@ -1,13 +1,24 @@
 #include "FaderTouchSensor.h"
 
-FaderTouchSensor::FaderTouchSensor() {}
+FaderTouchSensor::FaderTouchSensor(uint8_t pin) {
+  m_pin = pin;
+}
 
-void FaderTouchSensor::update(int16_t touchValue) {
+void FaderTouchSensor::update() {
   if (!m_enabled) return;
-
   m_prevTouching = m_isTouching;
 
-  m_touchValue = touchValue;
+
+  // reading with single wire as per https://github.com/martin2250/ADCTouch
+  pinMode(m_pin, INPUT_PULLUP);
+  ADMUX |= 0b11111;
+  ADCSRA |= (1 << ADSC);          // start conversion
+  while(!(ADCSRA & (1 << ADIF))); // wait for conversion to finish
+  ADCSRA |= (1 << ADIF);          //reset the flag
+  pinMode(m_pin, INPUT);
+
+
+  m_touchValue = analogRead(m_pin);
   m_isTouching = m_touchValue > m_touchThresh;
 
   // check for multi tap
@@ -21,6 +32,10 @@ void FaderTouchSensor::update(int16_t touchValue) {
   }
 
   if (tapEnded()) { m_tapCountResult = m_tapCount; }
+}
+
+uint16_t FaderTouchSensor::getTouchValue() {
+  return m_touchValue;
 }
 
 bool FaderTouchSensor::isTouching() {
