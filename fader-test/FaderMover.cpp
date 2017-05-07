@@ -32,7 +32,7 @@ void FaderMover::update(uint16_t position) {
         const auto absError = abs(error);
 
         if (absError > m_errorThresh) {
-          setDirection(error > 0 ? LOW : HIGH);
+          setDirection(error > 0 ? HIGH : LOW);
           setMotorPwm(absError > m_motorSlowThresh
             ? m_motorFastPwm
             : map(absError, 1, m_motorSlowThresh, m_motorSlowPwm, m_motorFastPwm));
@@ -144,7 +144,9 @@ void FaderMover::toggleDirection() {
 }
 
 void FaderMover::setMotorPwm(uint8_t value) {
-  analogWrite(m_motorPin, constrain(value, 0, 255));
+  const auto constrained = constrain(value, 0, 255);
+  const auto pwm = m_currentDirection == LOW ? constrained : 255 - constrained;
+  analogWrite(m_motorPin, pwm);
 }
 
 uint16_t FaderMover::getAbsPosition(uint8_t normPosition) {
