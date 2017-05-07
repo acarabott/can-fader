@@ -23,6 +23,7 @@ protected:
   void toggleDirection();
   void setMotorPwm(uint8_t value);
   void setPosition(uint16_t absPosition, uint64_t delay = 0);
+  void stopMotor();
 
   uint16_t getAbsPosition(uint8_t normPosition);
   uint8_t getNormPosition(uint16_t absPosition);

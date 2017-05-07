@@ -38,12 +38,12 @@ void FaderMover::update(uint16_t position) {
             : map(absError, 1, m_motorSlowThresh, m_motorSlowPwm, m_motorFastPwm));
         }
         else {
-          setMotorPwm(0);
+          stopMotor();
           m_moving = false;
         }
       }
       else {
-        setMotorPwm(0);
+        stopMotor();
       }
     }
   }
@@ -58,7 +58,7 @@ void FaderMover::update(uint16_t position) {
           break;
         }
         case TickingState::ForwardStop : {
-          setMotorPwm(0);
+          stopMotor();
           m_tickingState = TickingState::Backward;
           toggleDirection();
           break;
@@ -69,13 +69,13 @@ void FaderMover::update(uint16_t position) {
           break;
         }
         case TickingState::BackwardStop : {
-          setMotorPwm(0);
+          stopMotor();
           m_tickingState = TickingState::Not;
           break;
         }
         default : {
           m_tickingState = TickingState::Not;
-          setMotorPwm(0);
+          stopMotor();
           break;
         }
       }
@@ -128,6 +128,10 @@ void FaderMover::setPosition(uint16_t absPosition, uint64_t delay) {
     m_delayedTime = millis() + delay;
     m_delayedSet = true;
   }
+}
+
+void FaderMover::stopMotor() {
+  setMotorPwm(0);
 }
 
 void FaderMover::setErrorThresh(uint16_t errorThresh) {
