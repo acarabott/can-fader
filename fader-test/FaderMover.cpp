@@ -30,17 +30,17 @@ void FaderMover::update(uint16_t position) {
       if (m_adjusting) {
         const int16_t error = m_target - position;
         const auto absError = abs(error);
+        const auto closeEnough = absError < m_errorThresh;
 
-        if (absError > m_errorThresh) {
+        if (closeEnough) {
+          stopMotor();
+          m_moving = false;
+        }
+        else {
           setDirection(error > 0 ? HIGH : LOW);
-
           setSpeed(absError > m_motorSlowThresh
             ? 100
             : map(absError, 1, m_motorSlowThresh, 0, 100));
-        }
-        else {
-          stopMotor();
-          m_moving = false;
         }
       }
       else {
