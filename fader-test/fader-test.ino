@@ -11,9 +11,9 @@
 
 #define LINE_MAX 1019
 
-const uint8_t g_touch_pin = A2;
-const uint8_t g_line_pin = A4;
-const uint8_t g_gesture_pin = A5;
+const uint8_t g_touch_pin = A0;
+const uint8_t g_line_pin = A1;
+const uint8_t g_gesture_pin = A2;
 
 const uint8_t g_motor_direction_pin = 12;
 const uint8_t g_motor_pwm_pin = 3;
@@ -43,8 +43,6 @@ void setup() {
 
 
 void loop() {
-  const auto potValue = analogRead(g_pot_pin);
-
   g_prevLineValue = g_lineValue;
   g_lineValue = analogRead(g_line_pin);
 
