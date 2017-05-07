@@ -2,7 +2,6 @@
 #include "FaderMover.h"
 #include "FaderPresets.h"
 #include "Touche.h"
-#include <Filters.h>
 
 #define P(VALUE) Serial.print((VALUE))
 #define PL(VALUE) Serial.println((VALUE))
@@ -33,52 +32,29 @@ Touche touche(g_gesture_pin);
 bool g_toucheTraining = false;
 bool g_prevGesture = 0;
 
-// filters out changes faster that 5 Hz.
-float filterFrequency = 10;
-
-// create a one pole (RC) lowpass filter
-FilterTwoPole lowpassFilter( LOWPASS, filterFrequency );
-
 void setup() {
   pinMode(g_motor_direction_pin, OUTPUT);
   pinMode(g_motor_pwm_pin, OUTPUT);
 
-  touche.setup();
-
-  lowpassFilter.setAsFilter(LOWPASS_BUTTERWORTH, filterFrequency, 900);
+  // touche.setup();
 
   Serial.begin(115200);
 }
 
 
 void loop() {
-  const auto touchValue = analogRead(g_touch_pin);
-  const auto filtered = lowpassFilter.input(touchValue);
+  const auto potValue = analogRead(g_pot_pin);
 
   g_prevLineValue = g_lineValue;
   g_lineValue = analogRead(g_line_pin);
 
   faderMover.update(g_lineValue);
+
+
   // faderMover.isMoving() ? touchSensor.disable() : touchSensor.enable();
-  touchSensor.update(filtered);
 
+  touchSensor.update();
   const auto touching = touchSensor.isTouching();
-
-
-  String s = "";
-
-  s += 900;
-  s += ", ";
-  s += filtered;
-  s += ", ";
-  s += touchSensor.getTouchThresh();
-  s += ", ";
-  s += touching ? 1020 : 1010;
-  s += ", ";
-  s += touchSensor.tapStarted() ? 1050 : touchSensor.tapEnded() ? 1030 : 1040;
-  s += ", ";
-  s += 1100;
-  PL(s);
 
 
   // if (touchSensor.tapStarted()) { PL("touch start"); }
