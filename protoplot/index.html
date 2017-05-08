@@ -17,30 +17,86 @@
   canvas.style.border = '1px black solid';
   document.body.appendChild(canvas);
 
-  let lastRenderTime = Date.now();
+  let liveData = [];
+  const gestures = [];
 
-  function render(ctx, data) {
+  document.body.addEventListener('keydown', event => {
+    const action = {
+      s: () => gestures.push(liveData.slice()),
+      r: () => gestures.length = 0
+    }[event.key];
+    action();
+  });
+
+  function getPeak(gesture) {
+    const val = Math.max(...gesture);
+    const idx = gesture.indexOf(val);
+    return { val, idx };
+  }
+
+  function getGestureDistance(src, target, method='squared') {
+    if (src.length !== target.length) { return Infinity; }
+
+    if (method === 'squared') {
+      return src.map((v, i) => Math.pow(v - target[i], 2)).reduce((p, c) => p + c, 0);
+    }
+
+    if (method === 'abs') {
+      return src.map((v, i) => Math.abs(v - target[i])).reduce((p, c) => p + c, 0);
+    }
+
+    if (method === 'peakSquared') {
+      const srcPeak = getPeak(src);
+      const targetPeak = getPeak(target);
+
+      return Math.pow((srcPeak.val - targetPeak.val) / 1023, 2) +
+             Math.pow((srcPeak.idx - targetPeak.idx) / src.length, 2);
+    }
+
+    if (method === 'peakAbs') {
+      const srcPeak = getPeak(src);
+      const targetPeak = getPeak(target);
+
+      return Math.abs((srcPeak.val - targetPeak.val) / 1023) +
+             Math.abs((srcPeak.idx - targetPeak.idx) / src.length);
+    }
+  }
+
+  function closestGesture(input, gestures) {
+    const errors = gestures.map(g => getGestureDistance(input, g, 'squared'));
+    const closest = gestures[errors.indexOf(Math.min(...errors))];
+    return closest;
+  }
+
+  function renderData(ctx, data, style='#000000', lineWidth=1) {
     const width = ctx.canvas.width;
     const height = ctx.canvas.height;
-    ctx.clearRect(0, 0, width, height);
-
     const stepX = width / data.length;
 
+    ctx.save();
+    ctx.strokeStyle = style;
+    ctx.lineWidth = lineWidth;
     ctx.beginPath();
     data.forEach((p, i) => {
       const x = stepX * i;
       const y = height - (p / 1023) * height;
       ctx.lineTo(x, y);
     });
-
     ctx.stroke();
+    ctx.restore();
+  }
 
-    const now = Date.now();
-    interval = now - lastRenderTime;
-    ctx.fillText(`${Math.round(1000 / interval)} fps`, 100, 100);
+  function render(ctx) {
+    const width = ctx.canvas.width;
+    const height = ctx.canvas.height;
+    ctx.clearRect(0, 0, width, height);
 
-    lastRenderTime = now;
-
+    renderData(ctx, liveData, '#000000');
+    const closest = closestGesture(liveData, gestures);
+    if (closest !== undefined) {
+      renderData(ctx, closest, 'rgb(43, 212, 156)', 10);
+    }
+    gestures.forEach(g => renderData(ctx, g, 'rgb(43, 156, 212)'));
   }
 
   socket.addEventListener('open', event => {
@@ -48,12 +104,17 @@
   });
 
   socket.addEventListener('message', event => {
-    reader.readAsArrayBuffer(event.data);
+    try {
+      reader.readAsArrayBuffer(event.data);
+    } catch(e) {
+      console.log('reader busy');
+    }
   });
 
   reader.addEventListener('loadend', () => {
     requestAnimationFrame(() => {
-      render(ctx, new Float32Array(reader.result));
+      liveData = new Float32Array(reader.result);
+      render(ctx);
     });
   });
 
