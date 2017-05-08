@@ -11,9 +11,11 @@
 
 #define LINE_MAX 1019
 
+// Don't use pins 8 or 9, used by Touche internally
+
 const uint8_t g_touch_pin = A0;
 const uint8_t g_line_pin = A1;
-const uint8_t g_gesture_pin = A2;
+const uint8_t g_gesture_pin = A5;
 
 const uint8_t g_motor_direction_pin = 12;
 const uint8_t g_motor_pwm_pin = 3;
@@ -28,7 +30,7 @@ uint8_t g_maxClickIntensity = 100;
 FaderTouchSensor touchSensor(g_touch_pin);
 FaderMover faderMover(g_motor_pwm_pin, g_motor_direction_pin);
 FaderPresets presets;
-// Touche touche(g_gesture_pin);
+Touche touche(g_gesture_pin);
 // bool g_toucheTraining = false;
 bool g_prevGesture = 0;
 
@@ -36,7 +38,7 @@ void setup() {
   pinMode(g_motor_direction_pin, OUTPUT);
   pinMode(g_motor_pwm_pin, OUTPUT);
 
-  // touche.setup();
+  touche.setup();
 
   Serial.begin(115200);
 }
@@ -65,7 +67,9 @@ void loop() {
     faderMover.tick(20);
   }
 
-  // touche.update();
+  touche.update();
+  touche.printResults();
+
 
   // if (g_toucheTraining && !touche.training()) {
   //   g_toucheTraining = false;
