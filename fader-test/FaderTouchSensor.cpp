@@ -1,13 +1,14 @@
 #include "FaderTouchSensor.h"
 
+
 FaderTouchSensor::FaderTouchSensor(uint8_t pin) {
   m_pin = pin;
+  m_lowpassFilter.setAsFilter(LOWPASS_BUTTERWORTH, m_filterFrequency, 900);
 }
 
 void FaderTouchSensor::update() {
   if (!m_enabled) return;
   m_prevTouching = m_isTouching;
-
 
   // reading with single wire as per https://github.com/martin2250/ADCTouch
   pinMode(m_pin, INPUT_PULLUP);
@@ -18,7 +19,7 @@ void FaderTouchSensor::update() {
   pinMode(m_pin, INPUT);
 
 
-  m_touchValue = analogRead(m_pin);
+  m_touchValue = m_lowpassFilter.input(analogRead(m_pin));
   m_isTouching = m_touchValue > m_touchThresh;
 
   // check for multi tap
