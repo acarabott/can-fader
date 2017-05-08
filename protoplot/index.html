@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Touché Listener</title>
+</head>
+<body>
+</body>
+<script>
+  const socket = new WebSocket('ws://localhost:9999');
+  window.onbeforeunload = event => socket.close();
+
+  const reader = new FileReader();
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 800;
+  canvas.height = 450;
+  canvas.style.border = '1px black solid';
+  document.body.appendChild(canvas);
+
+  let lastRenderTime = Date.now();
+
+  function render(ctx, data) {
+    const width = ctx.canvas.width;
+    const height = ctx.canvas.height;
+    ctx.clearRect(0, 0, width, height);
+
+    const stepX = width / data.length;
+
+    ctx.beginPath();
+    data.forEach((p, i) => {
+      const x = stepX * i;
+      const y = height - (p / 1023) * height;
+      ctx.lineTo(x, y);
+    });
+
+    ctx.stroke();
+
+    const now = Date.now();
+    interval = now - lastRenderTime;
+    ctx.fillText(`${Math.round(1000 / interval)} fps`, 100, 100);
+
+    lastRenderTime = now;
+
+  }
+
+  socket.addEventListener('open', event => {
+    console.log('socket open');
+  });
+
+  socket.addEventListener('message', event => {
+    reader.readAsArrayBuffer(event.data);
+  });
+
+  reader.addEventListener('loadend', () => {
+    requestAnimationFrame(() => {
+      render(ctx, new Float32Array(reader.result));
+    });
+  });
+
+
+
+
+</script>
+</html>
