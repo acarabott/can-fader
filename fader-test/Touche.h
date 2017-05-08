@@ -24,7 +24,7 @@
 //           GND    GND
 
 
-#include "Arduino.h"
+#include <Arduino.h>
 
 class Touche
 {
@@ -40,6 +40,7 @@ public:
   uint8_t currentGesture();
   void    clearGestures();
   void    setLag(uint16_t lag);
+  void    printResults();
 
   static const uint8_t signalPin = 9;
   static const uint8_t syncPin = 8;
