@@ -5,121 +5,39 @@
 </head>
 <body>
 </body>
+<script src="Gestures.js"></script>
+<script src="Touch.js"></script>
 <script>
   const socket = new WebSocket('ws://localhost:9999');
   window.onbeforeunload = event => socket.close();
 
-  const reader = new FileReader();
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  canvas.width = 800;
-  canvas.height = 450;
-  canvas.style.border = '1px black solid';
-  document.body.appendChild(canvas);
-
-  let liveData = [];
-  const gestures = [];
-
-  document.body.addEventListener('keydown', event => {
-    const action = {
-      s: () => gestures.push(liveData.slice()),
-      r: () => gestures.length = 0
-    }[event.key];
-    action();
+  const gestures = new Gestures();
+  const touch = new Touch();
+  [gestures, touch].forEach(output => {
+    output.canvas.style.border = '1px black solid';
+    output.canvas.style.display = 'inline-block';
+    output.canvas.style.margin = '10px';
+    document.body.appendChild(output.canvas);
   });
-
-  function getPeak(gesture) {
-    const val = Math.max(...gesture);
-    const idx = gesture.indexOf(val);
-    return { val, idx };
-  }
-
-  function getGestureDistance(src, target, method='squared') {
-    if (src.length !== target.length) { return Infinity; }
-
-    if (method === 'squared') {
-      return src.map((v, i) => Math.pow(v - target[i], 2)).reduce((p, c) => p + c, 0);
-    }
-
-    if (method === 'abs') {
-      return src.map((v, i) => Math.abs(v - target[i])).reduce((p, c) => p + c, 0);
-    }
-
-    if (method === 'peakSquared') {
-      const srcPeak = getPeak(src);
-      const targetPeak = getPeak(target);
-
-      return Math.pow((srcPeak.val - targetPeak.val) / 1023, 2) +
-             Math.pow((srcPeak.idx - targetPeak.idx) / src.length, 2);
-    }
-
-    if (method === 'peakAbs') {
-      const srcPeak = getPeak(src);
-      const targetPeak = getPeak(target);
-
-      return Math.abs((srcPeak.val - targetPeak.val) / 1023) +
-             Math.abs((srcPeak.idx - targetPeak.idx) / src.length);
-    }
-  }
-
-  function closestGesture(input, gestures) {
-    const errors = gestures.map(g => getGestureDistance(input, g, 'squared'));
-    const closest = gestures[errors.indexOf(Math.min(...errors))];
-    return closest;
-  }
-
-  function renderData(ctx, data, style='#000000', lineWidth=1) {
-    const width = ctx.canvas.width;
-    const height = ctx.canvas.height;
-    const stepX = width / data.length;
-
-    ctx.save();
-    ctx.strokeStyle = style;
-    ctx.lineWidth = lineWidth;
-    ctx.beginPath();
-    data.forEach((p, i) => {
-      const x = stepX * i;
-      const y = height - (p / 1023) * height;
-      ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function render(ctx) {
-    const width = ctx.canvas.width;
-    const height = ctx.canvas.height;
-    ctx.clearRect(0, 0, width, height);
-
-    renderData(ctx, liveData, '#000000');
-    const closest = closestGesture(liveData, gestures);
-    if (closest !== undefined) {
-      renderData(ctx, closest, 'rgb(43, 212, 156)', 10);
-    }
-    gestures.forEach(g => renderData(ctx, g, 'rgb(43, 156, 212)'));
-  }
 
   socket.addEventListener('open', event => {
     console.log('socket open');
   });
 
   socket.addEventListener('message', event => {
-    try {
-      reader.readAsArrayBuffer(event.data);
-    } catch(e) {
-      console.log('reader busy');
+    const [type, data] = event.data.split(':');
+
+    if (type === 'm') {
+      console.log(data);
+    }
+    else if (type === 'd') {
+      const values = new Float32Array(data.split(',').map(s => parseFloat(s, 10)));
+      requestAnimationFrame(() => gestures.update(values));
+    }
+    else if (type === 't') {
+      const values = data.split(',').map(s => parseInt(s, 10));
+      requestAnimationFrame(() => touch.update(...values));
     }
   });
-
-  reader.addEventListener('loadend', () => {
-    requestAnimationFrame(() => {
-      liveData = new Float32Array(reader.result);
-      render(ctx);
-    });
-  });
-
-
-
-
 </script>
 </html>

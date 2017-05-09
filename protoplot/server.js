@@ -26,9 +26,8 @@ server.on('connection', ws => {
     console.log(`received message: ${message}`);
   });
   port.on('data', data => {
-    const values = new Float32Array(data.split(',').map(s => parseFloat(s, 10)));
     if (ws.readyState === WebSocket.OPEN) {
-      ws.send(values);
+      ws.send(data);
     }
   });
 });
