@@ -23,10 +23,11 @@ void Touche::update() {
   // read data
   for (auto i = 0; i < numFreqs; ++i) {
     const auto value = analogRead(m_readPin);   // read response signal
+    const auto freq = i + freqMin;
     bitClear(TCCR1B, 0);                        // stop generator
     TCNT1 = 0;                                  // set new frequency
-    ICR1 = i;
-    OCR1A = i / 2;
+    ICR1 = freq;
+    OCR1A = freq / 2;
     bitSet(TCCR1B, 0);                          // start generator
 
     m_results[i] = m_results[i] * 0.5 + float(value) * 0.5; // filter result

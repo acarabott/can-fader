@@ -49,7 +49,9 @@ protected:
 
   float getDistance(float x1, float y1, float x2, float y2);
 
-  static const uint16_t numFreqs = 200;
+  static const uint16_t freqMin = 50;
+  static const uint16_t freqMax = 150;
+  static const uint16_t numFreqs = freqMax - freqMin;
   static const uint32_t maxDist = numFreqs * 1024;
   static const size_t   numGestures = 3;
   static const size_t   numGesturePoints = 2;
