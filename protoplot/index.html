@@ -5,15 +5,35 @@
 </head>
 <body>
 </body>
-<script src="Gestures.js"></script>
+<script src="GestureRenderer.js"></script>
 <script src="Touch.js"></script>
 <script>
   const socket = new WebSocket('ws://localhost:9999');
   window.onbeforeunload = event => socket.close();
-
-  const gestures = new Gestures();
   const touch = new Touch();
-  [gestures, touch].forEach(output => {
+  const gestureRenderer = new GestureRenderer();
+
+  const worker = new Worker('worker.js');
+
+  let recording = false;
+  let closest = undefined;
+  const msgActions = {
+    trained: e => console.log('training done'),
+    stoppedRecording: e => {
+      console.log('recording done');
+      worker.postMessage({ key: 'getGestures' });
+    },
+    gestures: e => gestureRenderer.setGestures(e.data.value),
+    recording: e => recording = e.data.value,
+    closest: e => closest = e.data.value,
+  };
+
+  worker.onmessage = e => {
+    // console.log(`client: ${e.data.key}`);
+    if (msgActions.hasOwnProperty(e.data.key)) { msgActions[e.data.key](e); }
+  };
+
+  [gestureRenderer, touch].forEach(output => {
     output.canvas.style.border = '1px black solid';
     output.canvas.style.display = 'inline-block';
     output.canvas.style.margin = '10px';
@@ -31,13 +51,24 @@
       console.log(data);
     }
     else if (type === 'd') {
-      const values = new Float32Array(data.split(',').map(s => parseFloat(s, 10)));
-      requestAnimationFrame(() => gestures.update(values));
+      const values = data.split(',').map(s => parseFloat(s, 10));
+      requestAnimationFrame(() => gestureRenderer.render(values, recording, closest));
+      worker.postMessage({key: 'recording' });
+      worker.postMessage({key: 'data', value: values});
     }
     else if (type === 't') {
       const values = data.split(',').map(s => parseInt(s, 10));
       requestAnimationFrame(() => touch.update(...values));
     }
+  });
+
+  document.body.addEventListener('keydown', event => {
+    const actions = {
+      s: () => worker.postMessage({key: 'toggleRecording'}),
+      r: () => worker.postMessage({key: 'reset'}),
+      t: () => worker.postMessage({key: 'train'})
+    };
+    if (actions.hasOwnProperty(event.key)) { actions[event.key](); }
   });
 </script>
 </html>

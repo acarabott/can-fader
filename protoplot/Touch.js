@@ -16,7 +16,8 @@ class Touch {
     this.ctx.save();
     const colors = [
       'rgb(0, 0, 0)',
-      'rgb(43, 156, 212)', 'rgb(249, 182, 118)',
+      'rgb(43, 156, 212)',
+      'rgb(249, 182, 118)',
       'rgb(43, 212, 156)'
     ];
 

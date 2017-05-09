@@ -1,25 +1,92 @@
 class Gestures {
-  constructor() {
-    this.canvas = document.createElement('canvas');
-    this.ctx = this.canvas.getContext('2d');
-    this.canvas.width = 800;
-    this.canvas.height = 450;
+  constructor(numInputs) {
     this.liveData = [];
+    this.recording = false;
+    this.numInputs = numInputs;
+    this.maxGestures = 4;
     this.gestures = [];
+    this.trainingLabel = 0;
+    this.trainingCount = 0;
+    this.iterations = 1000;
+    this.createClassifier(this.numInputs, this.maxGestures);
+    this.trainingCallbacks = [];
+    this.stopRecordingCallbacks = [];
+  }
 
-    document.body.addEventListener('keydown', event => {
-      const actions = {
-        s: () => this.gestures.push(this.liveData.slice()),
-        r: () => this.gestures.length = 0
-      };
-      if (actions.hasOwnProperty(event.key)) { actions[event.key](); }
+  reset() {
+    this.gestures.length = 0;
+    delete this.net;
+    this.createClassifier(this.numInputs, this.maxGestures);
+  }
+
+  startRecording() {
+    this.trainingCount = 0;
+    this.recording = true;
+    this.trainingLabel = this.gestures.length;
+  }
+
+  stopRecording() {
+    this.recording = false;
+    this.stopRecordingCallbacks.forEach(cb => cb());
+  }
+
+  toggleRecording() {
+    this.recording ? this.stopRecording() : this.startRecording();
+    if (!this.recording) { this.train(); }
+  }
+
+  addTrainingCallback(func) { this.trainingCallbacks.push(func); }
+
+  addStopRecordingCallback(func) { this.stopRecordingCallbacks.push(func); }
+
+  train() {
+    console.log('started training');
+    for (let i = 0; i < this.iterations; i++) {
+      this.gestures.forEach((gesture, label) => {
+        gesture.forEach(data => this.trainClassifier(data, label));
+      });
+    }
+    console.log('finished training');
+    this.trainingCallbacks.forEach(cb => cb());
+  }
+
+  storeData(data, label) {
+    if (this.gestures[label] === undefined) { this.gestures[label] = []; }
+    this.gestures[label].push(data);
+  }
+
+  createClassifier(dataSize, numClasses) {
+    const layer_defs = [];
+    layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth: dataSize});
+    layer_defs.push({type:'fc', num_neurons:6, activation: 'tanh'});
+    layer_defs.push({type:'fc', num_neurons:2, activation: 'tanh'});
+    layer_defs.push({type:'softmax', num_classes: numClasses});
+
+    this.net = new convnetjs.Net();
+    this.net.makeLayers(layer_defs);
+
+    this.trainer = new convnetjs.SGDTrainer(this.net, {
+      learning_rate:0.01,
+      momentum:0.1,
+      batch_size:10,
+      l2_decay:0.001
     });
+  }
+
+  getInputVol(data) {
+    const norm = data.map(v => v / 1023);
+    return new convnetjs.Vol(norm);
+  }
+
+  trainClassifier(data, label) {
+    const vol = this.getInputVol(data);
+    this.trainer.train(vol, label);
   }
 
   getPeak(gesture) {
     const val = Math.max(...gesture);
     const idx = gesture.indexOf(val);
-    return { val, idx };
+    return { idx, val };
   }
 
   getGestureDistance(src, target, method='squared') {
@@ -50,45 +117,25 @@ class Gestures {
     }
   }
 
-  closestGesture(input, gestures) {
-    const errors = gestures.map(g => this.getGestureDistance(input, g, 'peakSquared'));
-    const closest = gestures[errors.indexOf(Math.min(...errors))];
-    return closest;
+  closestGesture(input) {
+    if (this.gestures.length === 0) { return; }
+    const vol = this.getInputVol(input);
+    const scores = this.net.forward(vol);
+    const max = scores.w.indexOf(Math.max(...scores.w));
+    return max;
   }
 
-  renderData(data, style='#000000', lineWidth=1) {
-    const width = this.ctx.canvas.width;
-    const height = this.ctx.canvas.height;
-    const stepX = width / data.length;
-
-    this.ctx.save();
-    this.ctx.strokeStyle = style;
-    this.ctx.lineWidth = lineWidth;
-    this.ctx.beginPath();
-    data.forEach((p, i) => {
-      const x = stepX * i;
-      const y = height - (p / 1023) * height;
-      this.ctx.lineTo(x, y);
-    });
-    this.ctx.stroke();
-    this.ctx.restore();
-  }
-
-  render() {
-    const width = this.ctx.canvas.width;
-    const height = this.ctx.canvas.height;
-    this.ctx.clearRect(0, 0, width, height);
-
-    this.renderData(this.liveData, '#000000');
-    const closest = this.closestGesture(this.liveData, this.gestures);
-    if (closest !== undefined) {
-      this.renderData(closest, 'rgb(43, 156, 212)', 5);
-    }
-    this.gestures.forEach(g => this.renderData(g, 'rgba(0, 0, 0, 0.2)'));
-  }
+  get currentGesture() { return this.closestGesture(this.liveData); }
 
   update(data) {
     this.liveData = data;
-    this.render();
+    if (this.recording) {
+      this.storeData(data, this.trainingLabel);
+      this.trainingCount++;
+      if (this.trainingCount === 50) {
+        this.stopRecording();
+        this.train();
+      }
+    }
   }
 }
