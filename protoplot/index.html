@@ -6,11 +6,9 @@
 <body>
 </body>
 <script src="GestureRenderer.js"></script>
-<script src="Touch.js"></script>
 <script>
   const socket = new WebSocket('ws://localhost:9999');
   window.onbeforeunload = event => socket.close();
-  const touch = new Touch();
   const gestureRenderer = new GestureRenderer();
 
   const worker = new Worker('worker.js');
@@ -33,7 +31,7 @@
     if (msgActions.hasOwnProperty(e.data.key)) { msgActions[e.data.key](e); }
   };
 
-  [gestureRenderer, touch].forEach(output => {
+  [gestureRenderer].forEach(output => {
     output.canvas.style.border = '1px black solid';
     output.canvas.style.display = 'inline-block';
     output.canvas.style.margin = '10px';
@@ -43,6 +41,7 @@
   socket.addEventListener('open', event => {
     console.log('socket open');
   });
+
 
   socket.addEventListener('message', event => {
     const [type, data] = event.data.split(':');
@@ -56,9 +55,9 @@
       worker.postMessage({key: 'recording' });
       worker.postMessage({key: 'data', value: values});
     }
-    else if (type === 't') {
-      const values = data.split(',').map(s => parseInt(s, 10));
-      requestAnimationFrame(() => touch.update(...values));
+    else if (type === 'l') {
+      const value = parseInt(data, 10);
+      console.log(data / 1023);
     }
   });
 
