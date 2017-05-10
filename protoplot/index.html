@@ -6,12 +6,31 @@
 <body>
 </body>
 <script src="GestureRenderer.js"></script>
+<script src="Slider.js"></script>
 <script>
   const socket = new WebSocket('ws://localhost:9999');
   window.onbeforeunload = event => socket.close();
   const gestureRenderer = new GestureRenderer();
-
   const worker = new Worker('worker.js');
+  const colors = [
+    [43, 156, 212],
+    [212, 100, 100],
+    [249, 182, 118],
+    [43, 212, 156],
+  ];
+
+  let sliders = [];
+
+  function clearSliders() { sliders.forEach(s => s.canvas.remove()); }
+
+  function createSlider(color) {
+    console.log('created slider');
+    const slider = new Slider(color);
+    document.body.appendChild(slider.canvas);
+    slider.canvas.style.margin = '5px 20px';
+    slider.canvas.style.border = '1px black solid';
+    return slider;
+  }
 
   let recording = false;
   let closest = undefined;
@@ -21,9 +40,16 @@
       console.log('recording done');
       worker.postMessage({ key: 'getGestures' });
     },
-    gestures: e => gestureRenderer.setGestures(e.data.value),
+    gestures: e => {
+      gestureRenderer.setGestures(e.data.value);
+      clearSliders();
+      sliders = e.data.value.slice(1).map((g, i) => createSlider(colors[i]));
+    },
     recording: e => recording = e.data.value,
-    closest: e => closest = e.data.value,
+    closest: e => {
+      closest = e.data.value;
+      sliders.forEach((s, i) => s.active = i === closest - 1);
+    }
   };
 
   worker.onmessage = e => {
@@ -56,9 +82,9 @@
       worker.postMessage({key: 'data', value: values});
     }
     else if (type === 'l') {
-      const value = parseInt(data, 10);
-      console.log(data / 1023);
-    }
+      const value = parseInt(data, 10) / 1023;
+      sliders.forEach(s => { if (s.active) { s.value = value; } });
+   }
   });
 
   document.body.addEventListener('keydown', event => {
