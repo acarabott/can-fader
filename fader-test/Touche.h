@@ -5,6 +5,7 @@
 // Illutron take on Disney style capacitive touch sensor using only passives
 // and Arduino
 // Dzl 2012
+// https://github.com/Illutron/AdvancedTouchSensing
 //
 // Ported by Arthur Carabott 2017
 //******************************************************************************
