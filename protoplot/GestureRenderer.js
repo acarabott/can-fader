@@ -2,8 +2,8 @@ class GestureRenderer {
   constructor(canvas) {
     this.canvas = document.createElement('canvas');
     this.ctx = this.canvas.getContext('2d');
-    this.canvas.width = 800;
-    this.canvas.height = 450;
+    this.canvas.width = 1000;
+    this.canvas.height = 500;
     this.gestures = [];
   }
 
@@ -16,11 +16,14 @@ class GestureRenderer {
     this.ctx.strokeStyle = style;
     this.ctx.lineWidth = lineWidth;
     this.ctx.beginPath();
+    let prev = {x: 0, y: 0};
     data.forEach((p, i) => {
       const x = stepX * i;
       const y = height - (p / 1023) * height;
       this.ctx.lineTo(x, y);
+      prev = {x, y};
     });
+    this.ctx.lineTo(width, prev.y);
     this.ctx.stroke();
     this.ctx.restore();
   }

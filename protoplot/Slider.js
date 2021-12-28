@@ -2,7 +2,7 @@ class Slider {
   constructor(rgb) {
     this.canvas = document.createElement('canvas');
     this.canvas.width = 80;
-    this.canvas.height = 450;
+    this.canvas.height = 500;
     this.ctx = this.canvas.getContext('2d');
     this._value = 0.0;
     this._active = false;
